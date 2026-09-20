@@ -206,6 +206,7 @@ function _prompt_package_name(
 
         if repository_exists
             println(output, "Repository $(owner_name)/$(repo_name) already exists.")
+            println(output, "Resuming setup preserves existing package files.")
             _prompt_yes_no(input, output, "Resume its setup?"; default = false) &&
                 return (repo_name = repo_name, resume = true)
         end

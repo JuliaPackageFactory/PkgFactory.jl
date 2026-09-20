@@ -10,7 +10,6 @@ mutable struct FakeCommandRunner
     registered_package_names::Vector{String}
     project_file::Union{Nothing,String}
     main_branch_exists::Bool
-    staged_changes::Bool
     gh_pages_exists::Bool
     deploy_key_exists::Bool
     documenter_secret_exists::Bool
@@ -32,7 +31,6 @@ function FakeCommandRunner(;
     registered_package_names::Vector{String} = String[],
     project_file::Union{Nothing,String} = nothing,
     main_branch_exists::Union{Nothing,Bool} = nothing,
-    staged_changes::Bool = true,
     gh_pages_exists::Bool = false,
     deploy_key_exists::Bool = false,
     documenter_secret_exists::Bool = false,
@@ -46,7 +44,6 @@ function FakeCommandRunner(;
         registered_package_names,
         project_file,
         isnothing(main_branch_exists) ? repository_exists : main_branch_exists,
-        staged_changes,
         gh_pages_exists,
         deploy_key_exists,
         documenter_secret_exists,
@@ -95,8 +92,6 @@ function (runner::FakeCommandRunner)(
         return runner.repository_exists,
         "",
         runner.repository_exists ? "" : "HTTP 404: Not Found"
-    elseif occursin("diff --cached --quiet", command)
-        return !runner.staged_changes, "", ""
     elseif occursin("secret list", command)
         secrets = runner.documenter_secret_exists ? "DOCUMENTER_KEY\n" : ""
         return true, secrets, ""
@@ -732,51 +727,21 @@ end
     @test "codecov-secret" in runner_with_substring.inputs
 end
 
-@testset "resume package creation" begin
+@testset "resume preserves existing package files" begin
     existing_uuid = "12345678-1234-5678-1234-567812345678"
     runner = FakeCommandRunner(
         repository_exists = true,
         project_file = "name = \"MyPkg\"\nuuid = \"$(existing_uuid)\"\n",
-        gh_pages_exists = true,
-        deploy_key_exists = true,
-        documenter_secret_exists = true,
-    )
-
-    @test PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package",
-        "codecov-secret";
-        resume = true,
-        command_runner = runner,
-        key_generator = () -> error("Keys must not be regenerated"),
-    )
-    @test !any(occursin("repo create", command) for command in runner.commands)
-    @test any(occursin("clone --branch main --single-branch", command) for command in runner.commands)
-    @test any(occursin("diff --cached --quiet", command) for command in runner.commands)
-    @test any(occursin(" commit -m ", command) for command in runner.commands)
-    @test any(occursin("push origin HEAD:main", command) for command in runner.commands)
-
-    runner = FakeCommandRunner(
-        repository_exists = true,
-        project_file = "name = \"MyPkg\"\nuuid = \"$(existing_uuid)\"\n",
-        staged_changes = false,
-        gh_pages_exists = true,
-        deploy_key_exists = true,
-        documenter_secret_exists = true,
     )
     @test PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package";
-        resume = true,
-        command_runner = runner,
-        key_generator = () -> error("Keys must not be regenerated"),
+        "ohno", "MyPkg", ["Different Author"], "Changed description";
+        template_name = "minimum", resume = true, command_runner = runner,
+        key_generator = () -> ("ssh-ed25519 public", "documenter-secret"),
     )
-    @test !any(occursin(" commit -m ", command) for command in runner.commands)
-    @test !any(occursin("push origin HEAD:main", command) for command in runner.commands)
+    @test !any(occursin(" clone ", command) || occursin(" commit ", command) ||
+               occursin(" push ", command) || occursin("diff --cached", command)
+               for command in runner.commands)
+    @test any(occursin("DOCUMENTER_KEY", command) for command in runner.commands)
 
     runner = FakeCommandRunner(
         repository_exists = true,
@@ -786,7 +751,7 @@ end
         deploy_key_exists = true,
         documenter_secret_exists = true,
     )
-    @test PkgFactory.LocalAPI.create_package_with_jll(
+    @test_throws ErrorException PkgFactory.LocalAPI.create_package_with_jll(
         "ohno",
         "MyPkg.jl",
         ["Shuhei Ohno"],
@@ -795,7 +760,7 @@ end
         command_runner = runner,
         key_generator = () -> error("Keys must not be regenerated"),
     )
-    @test any(occursin("clone --branch main --single-branch", command) for command in runner.commands)
+    @test !any(occursin(" clone ", command) || occursin(" push ", command) for command in runner.commands)
     @test !any(occursin("repo create", command) for command in runner.commands)
 
     runner = FakeCommandRunner(
@@ -1108,6 +1073,7 @@ end
     @test only(creator.calls).args[5] == ""
     @test only(creator.calls).options.template_name == "all-in-one"
     @test only(creator.calls).options.resume
+    @test occursin("Resuming setup preserves existing package files.", text)
 end
 
 @testset "local UI cancellation" begin
@@ -1516,3 +1482,6 @@ end
 end
 
 include("web_hardening.jl")
+
+# These tests use only temporary local Git repositories, never GitHub.
+include("e2e/sync_tests.jl")

@@ -29,7 +29,40 @@ Development REPL (with Revise):
 julia -i -E 'using Revise; import Pkg; Pkg.activate("."); using PkgFactory; PkgFactory.hello()'
 ```
 
-Local API tests replace the command runner and SSH key generator with test doubles. The default test suite must not create repositories, change GitHub authentication, or write repository secrets. End-to-end checks should use a dedicated account and repository and must not run in the default CI workflow.
+Default tests use test doubles and temporary local Git repositories. They do not write to GitHub.
+
+## Template repository tests
+
+Run **Actions → Template repositories E2E → Run workflow** on `main` to publish
+and test the `Minimum`, `Simple`, and `AllInOne` templates. Create the three
+repositories (`Minimum.jl`, `Simple.jl`, and `AllInOne.jl`) before the first run.
+An empty repository receives its first commit; subsequent runs preserve its UUID
+and history. Repositories with commits must have a matching `Project.toml` on
+`main`.
+
+Set these values under **Settings → Secrets and variables → Actions**:
+
+| Type | Name | Value |
+| :--- | :--- | :--- |
+| Secret | `PKGFACTORY_E2E_TOKEN` | A fine-grained PAT limited to the three template repositories |
+| Variable | `PKGFACTORY_E2E_OWNER` | Repository owner, such as `ohno` |
+
+The PAT needs **Contents: Read and write**, **Workflows: Read and write**, and
+**Metadata: Read-only**. No Administration, Secrets, or Actions permissions are
+needed. This workflow does not create repositories, change repository settings,
+or configure deploy keys or secrets.
+
+The E2E script renders the templates, commits changed files, checks that the
+remote received the commit, and runs each generated package's tests. Commits
+record the source PkgFactory SHA; the job summary links to the changes. Files
+outside the current template are retained, including files removed from a newer
+template. Identical output creates no commit. Concurrent remote edits cause the
+push to fail without rewriting history.
+
+The workflow is manual and separate from normal CI. It does not wait for the
+generated repositories' own workflows. Documentation deployment in `Simple.jl`
+and `AllInOne.jl` requires a deploy key and `DOCUMENTER_KEY`, configured separately.
+Local tests exercise the publishing helper against temporary Git repositories.
 
 OAuth Device Flow Sequence Diagram:
 

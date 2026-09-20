@@ -87,7 +87,7 @@ PkgFactory.LocalAPI.create_package(
 
 `create_package` uses the authenticated GitHub CLI session. It creates the repository and its initial commit, creates the `gh-pages` branch, and configures the `DOCUMENTER_KEY` repository secret. Pass a Codecov token as the optional fifth argument to also configure `CODECOV_TOKEN`.
 
-If a previous attempt stopped after creating the repository, call `create_package_with_jll` with `resume = true`. When the repository already has a `main` branch, PkgFactory clones it and overwrites the paths supplied by the selected template while preserving the existing package UUID and files outside that template. A repository with `Project.toml` is updated only when its package name matches the requested package. If the rendered files already match, no update commit is created.
+Existing repositories are rejected by default. If a previous attempt stopped after creating the repository, call `create_package_with_jll` with `resume = true`. This preserves existing package files and resumes branch and secret setup. A repository with an existing `main` branch must have a matching package name and a UUID in `Project.toml`; otherwise setup is refused.
 
 ## API Reference
 

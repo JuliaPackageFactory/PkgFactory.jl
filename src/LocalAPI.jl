@@ -386,72 +386,6 @@ function _main_branch_exists(
     error("Command failed: $(cmd)\nSTDERR:\n$(stderr)")
 end
 
-function _update_existing_package(
-    owner_name::String,
-    repo_name::String,
-    author_names::Vector{String},
-    package_description::String,
-    template_name::String,
-    commit_message::String;
-    package_uuid::Union{Nothing,String} = nothing,
-    command_runner = _run_command,
-)::Bool
-    repo_name = _normalize_repo_name(repo_name)
-    paths_and_contents = Templates.generate_template_files_dict(
-        owner_name,
-        repo_name,
-        author_names,
-        package_description,
-        template_name;
-        package_uuid = package_uuid,
-    )
-    git_user = get_authenticated_user(; command_runner = command_runner)
-
-    return mktempdir() do tempdir
-        source_path = joinpath(tempdir, "repository")
-        _run_command_or_throw(
-            `$(gh_executable()) auth setup-git`;
-            env = _git_path_environment(),
-            command_runner = command_runner,
-        )
-        _run_command_or_throw(
-            `$(git_executable()) clone --branch main --single-branch https://github.com/$(owner_name)/$(repo_name).git $(source_path)`;
-            command_runner = command_runner,
-        )
-        _write_template_files(source_path, paths_and_contents)
-        _run_command_or_throw(
-            `$(git_executable()) -C $(source_path) config user.name $(git_user.login)`;
-            command_runner = command_runner,
-        )
-        _run_command_or_throw(
-            `$(git_executable()) -C $(source_path) config user.email $(git_user.email)`;
-            command_runner = command_runner,
-        )
-        _run_command_or_throw(
-            `$(git_executable()) -C $(source_path) add .`;
-            command_runner = command_runner,
-        )
-
-        unchanged, _, stderr = command_runner(
-            `$(git_executable()) -C $(source_path) diff --cached --quiet`;
-            env = Dict{String,String}(),
-            input = nothing,
-        )
-        unchanged && return false
-        isempty(strip(stderr)) || error("Failed to inspect the rendered package changes: $(stderr)")
-
-        _run_command_or_throw(
-            `$(git_executable()) -C $(source_path) commit -m $(commit_message)`;
-            command_runner = command_runner,
-        )
-        _run_command_or_throw(
-            `$(git_executable()) -C $(source_path) push origin HEAD:main`;
-            command_runner = command_runner,
-        )
-        return true
-    end
-end
-
 """
 $(DocStringExtensions.TYPEDSIGNATURES)
 
@@ -718,6 +652,8 @@ end
 $(DocStringExtensions.TYPEDSIGNATURES)
 
 Create a GitHub repository, commit the generated package, and configure documentation and coverage secrets using the authenticated GitHub CLI session.
+Existing repositories are rejected by default. `resume=true` repairs setup without
+rewriting existing package files. This API does not provide a template update mode.
 
 ```
 PkgFactory.LocalAPI.create_package_with_jll(
@@ -775,30 +711,16 @@ function create_package_with_jll(
         )
     else
         package_name = _get_package_name(repo_name)
-        package_uuid = nothing
-        if !isnothing(project_file)
-            _get_project_value(project_file, "name") == package_name || error(
-                "The existing repository does not contain the expected package, \"$(package_name)\".",
-            )
-            package_uuid = _get_project_value(project_file, "uuid")
-            isnothing(package_uuid) &&
-                error("The existing package Project.toml does not contain a UUID.")
-        end
-        updated = _update_existing_package(
-            owner_name,
-            repo_name,
-            author_names,
-            package_description,
-            template_name,
-            commit_message;
-            package_uuid = package_uuid,
-            command_runner = command_runner,
+        isnothing(project_file) && error(
+            "The existing repository has a main branch but no Project.toml. Inspect it manually; automatic setup is refused.",
         )
-        if updated
-            @info "The existing package files were updated."
-        else
-            @info "The existing package files already match the selected template."
-        end
+        _get_project_value(project_file, "name") == package_name || error(
+            "The existing repository does not contain the expected package, \"$(package_name)\".",
+        )
+        package_uuid = _get_project_value(project_file, "uuid")
+        isnothing(package_uuid) &&
+            error("The existing package Project.toml does not contain a UUID.")
+        @info "Preserving existing package files while resuming setup."
     end
 
     create_branch_gh_pages(owner_name, repo_name; command_runner = command_runner)
