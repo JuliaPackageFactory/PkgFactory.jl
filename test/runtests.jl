@@ -391,8 +391,6 @@ end
     @test occursin("JET = \"0.9, 0.10, 0.11, 0.12\"", all_in_one["test/Project.toml"])
     @test occursin("Test =", all_in_one["test/Project.toml"])
     @test occursin("Documenter = \"1\"", all_in_one["docs/Project.toml"])
-    @test occursin("Julia-1.12+-blue.svg", all_in_one["README.md"])
-    @test occursin("Julia-1.12+-blue.svg", all_in_one["docs/src/index.md"])
 
     @test !haskey(all_in_one, ".github/workflows/CompatHelper.yml")
     dependabot = all_in_one[".github/dependabot.yml"]
@@ -453,13 +451,6 @@ end
     @test occursin("```jldoctest", simple["src/MyPkg.jl"])
     @test occursin("Test =", simple["test/Project.toml"])
     @test !occursin("DocStringExtensions", simple["Project.toml"])
-    @test occursin("actions/workflows/CI.yml/badge.svg", simple["README.md"])
-    @test occursin("docs-stable-blue.svg", simple["README.md"])
-    @test occursin("codecov.io/gh/ohno/MyPkg.jl", simple["README.md"])
-    @test occursin("Julia-1.12+-blue.svg", simple["README.md"])
-    @test occursin("Julia-1.12+-blue.svg", simple["docs/src/index.md"])
-    @test !occursin("github/license", simple["README.md"])
-    @test !occursin("github/license", simple["docs/src/index.md"])
     @test occursin("API Reference", simple["README.md"])
 
     simple_ci = simple[".github/workflows/CI.yml"]
@@ -495,10 +486,14 @@ end
     )
 
     @test haskey(minimum, ".github/workflows/CI.yml")
-    @test occursin("actions/workflows/CI.yml/badge.svg", minimum["README.md"])
-    @test !occursin("github/license", minimum["README.md"])
     @test occursin("Pkg.add(url=", minimum["README.md"])
     @test occursin("MyPkg.hello()", minimum["README.md"])
+    @test occursin("## Development", minimum["README.md"])
+    @test occursin("git clone https://github.com/ohno/MyPkg.jl.git", minimum["README.md"])
+    @test occursin("cd MyPkg.jl", minimum["README.md"])
+    @test occursin("Pkg.test()", minimum["README.md"])
+    @test !occursin("## Acknowledgments", minimum["README.md"])
+    @test !occursin("PkgFactory.jl", minimum["README.md"])
     minimum_ci = minimum[".github/workflows/CI.yml"]
     @test !occursin("version: 'min'", minimum_ci)
     @test !occursin("version: 'pre'", minimum_ci)
@@ -513,7 +508,6 @@ end
     minimum_project_uuid = only(match(r"uuid = \"([^\"]+)\"", minimum["Project.toml"]).captures)
     @test occursin("MyPkg = \"$(minimum_project_uuid)\"", minimum["test/Project.toml"])
     @test occursin("Test =", minimum["test/Project.toml"])
-    @test occursin("Julia-1.12+-blue.svg", minimum["README.md"])
     @test !any(startswith(path, "docs/") for path in keys(minimum))
     @test !haskey(minimum, "CITATION.bib")
     @test !occursin("CITATION", minimum["README.md"])
@@ -525,9 +519,9 @@ end
     )
 end
 
-@testset "quality badges track dedicated workflows" begin
+@testset "dedicated quality workflows" begin
     files = PkgFactory.Templates.generate_template_files_dict(
-        "example", "BadgePkg.jl", ["Example Author"], "Badge tests", "all-in-one",
+        "example", "QualityPkg.jl", ["Example Author"], "Quality workflow tests", "all-in-one",
     )
     for tool in ("Aqua", "JET")
         script = lowercase(tool) * ".jl"
@@ -542,25 +536,14 @@ end
         @test occursin(raw"group: ${{ github.workflow }}-${{ github.ref }}", workflow)
         @test !occursin("continue-on-error", workflow)
         @test occursin("include(\"$script\")", files["test/runtests.jl"])
-        @test occursin("using BadgePkg", files["test/$script"])
+        @test occursin("using QualityPkg", files["test/$script"])
         @test !occursin("{{{", files["test/$script"])
-        for path in ("README.md", "docs/src/index.md")
-            markdown = files[path]
-            @test occursin("github/actions/workflow/status/example/BadgePkg.jl/$tool.yml?branch=main&event=push&label=", markdown)
-            @test occursin("actions/workflows/$tool.yml?query=branch%3Amain", markdown)
-            @test !occursin("tested_with", markdown)
-            @test !occursin("-passing-", markdown)
-        end
     end
-    @test occursin("Aqua.test_all(BadgePkg)", files["test/aqua.jl"])
-    @test occursin("JET.test_package(BadgePkg; target_modules = (BadgePkg,))", files["test/jet.jl"])
-    for path in ("README.md", "docs/src/index.md")
-        @test occursin("label=Aqua&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2C", files[path])
-        @test occursin("label=%F0%9F%9B%A9%EF%B8%8F%20JET", files[path])
-    end
+    @test occursin("Aqua.test_all(QualityPkg)", files["test/aqua.jl"])
+    @test occursin("JET.test_package(QualityPkg; target_modules = (QualityPkg,))", files["test/jet.jl"])
     for template in ("simple", "minimum")
         basic = PkgFactory.Templates.generate_template_files_dict(
-            "example", "BadgePkg.jl", ["Example Author"], "Badge tests", template,
+            "example", "QualityPkg.jl", ["Example Author"], "Quality workflow tests", template,
         )
         @test !haskey(basic, ".github/workflows/Aqua.yml")
         @test !haskey(basic, ".github/workflows/JET.yml")
@@ -604,24 +587,6 @@ end
     @test occursin("import NotebookPkg", join(code_cells[3]["source"]))
     @test occursin("NotebookPkg.hello()", join(code_cells[4]["source"]))
     @test occursin("@assert message == \"Hello, World!\"", join(code_cells[4]["source"]))
-    for page in ("README.md", "docs/src/index.md")
-        @test occursin("[![Colab: open](https://badgen.net/static/Colab/open/007ec6?icon=", files[page])
-        @test occursin("&iconWidth=22)]", files[page])
-        @test !any(startswith(key, ".github/badges/") for key in keys(files))
-        @test !occursin(".github/badges/", files[page])
-        encoded = match(r"icon=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2C([^)&]+)", files[page]).captures[1]
-        logo = String(PkgFactory.WebAPI.Base64.base64decode(replace(encoded, "%2B" => "+", "%2F" => "/", "%3D" => "=")))
-        @test occursin("viewBox=\"0 5 24 14\"", logo)
-        @test !occursin("<rect", logo)
-        @test !occursin("background", logo)
-        @test occursin("#e8710a", logo)
-        @test occursin("#f9ab00", logo)
-        @test length(collect(eachmatch(r"<path ", logo))) == 5
-        @test !occursin("logo=googlecolab", files[page])
-        @test !occursin("colab-badge.svg", files[page])
-        @test occursin("https://colab.research.google.com/github/example-owner/NotebookPkg.jl/blob/main/$path", files[page])
-        @test occursin("Julia 1.12+", files[page])
-    end
     for template in ("simple", "minimum")
         basic = PkgFactory.Templates.generate_template_files_dict(
             "example-owner", "NotebookPkg.jl", ["Example Author"], "Notebook tests", template,
@@ -631,75 +596,20 @@ end
     end
 end
 
-@testset "colored Julia and text-only docs badges" begin
-    for template in ("minimum", "simple", "all-in-one")
-        files = PkgFactory.Templates.generate_template_files_dict(
-            "example", "IconPkg.jl", ["Example Author"], "Badge icons", template,
-        )
-        for page in ("README.md", "docs/src/index.md")
-            haskey(files, page) || continue
-            markdown = files[page]
-            encoded = match(r"Julia-1\.12\+-blue\.svg\?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2C([^)&]+)", markdown).captures[1]
-            logo = String(PkgFactory.WebAPI.Base64.base64decode(replace(encoded, "%2B" => "+", "%2F" => "/", "%3D" => "=")))
-            for color in ("rgb(79.6%, 23.5%, 20%)", "rgb(22%, 59.6%, 14.9%)", "rgb(58.4%, 34.5%, 69.8%)")
-                @test occursin(color, logo)
-            end
-            @test !occursin("<rect", logo)
-            @test occursin("Stefan Karpinski", logo)
-            @test !occursin("logo=julia", markdown)
-            @test !occursin("logo=gitbook", markdown)
-            if template != "minimum"
-                for (label, version) in (("Stable", "stable"), ("Dev", "dev"))
-                    @test occursin("[![$label](https://img.shields.io/badge/docs-$version-blue.svg)]", markdown)
-                end
-            end
-        end
-    end
-end
-
-@testset "original Runic badge with formatting workflow" begin
+@testset "formatting workflow" begin
     files = PkgFactory.Templates.generate_template_files_dict(
-        "example", "FormatPkg.jl", ["Example Author"], "Runic badge", "all-in-one",
+        "example", "FormatPkg.jl", ["Example Author"], "Formatting workflow", "all-in-one",
     )
     @test haskey(files, ".github/workflows/Format.yml")
     workflow = files[".github/workflows/Format.yml"]
     @test occursin("fredrikekre/runic-action@v1", workflow)
     @test occursin("- 'main'", workflow)
     @test occursin(raw"continue-on-error: ${{ github.event_name == 'pull_request' }}", workflow)
-    for page in ("README.md", "docs/src/index.md")
-        @test occursin("[![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-black)](https://github.com/fredrikekre/Runic.jl)", files[page])
-        @test !occursin("Format.yml?branch=", files[page])
-        @test !occursin("[![Runic]", files[page])
-        @test !occursin("-passing-", files[page])
-    end
     for template in ("simple", "minimum")
         basic = PkgFactory.Templates.generate_template_files_dict(
             "example", "FormatPkg.jl", ["Example Author"], "Basic template", template,
         )
-        @test !occursin("code_style-", basic["README.md"])
         @test !haskey(basic, ".github/workflows/Format.yml")
-    end
-end
-
-@testset "README and docs badge order" begin
-    expected_by_template = Dict(
-        "minimum" => ["Julia 1.12+", "CI"],
-        "simple" => ["Julia 1.12+", "Stable", "Dev", "CI", "coverage"],
-        "all-in-one" => [
-            "Julia 1.12+", "Colab: open", "Stable", "Dev", "Citation", "license",
-            "code style: runic", "contributer's guide: ColPrac", "CI", "coverage",
-            "Aqua", "JET",
-        ],
-    )
-    for (template, expected) in expected_by_template
-        files = PkgFactory.Templates.generate_template_files_dict(
-            "example", "OrderedPkg.jl", ["Example Author"], "Ordered badges", template,
-        )
-        for page in ("README.md", "docs/src/index.md")
-            haskey(files, page) || continue
-            actual = [m.captures[1] for m in eachmatch(r"(?m)^\[!\[([^\]]+)\]", files[page])]
-            @test actual == expected
-        end
     end
 end
 
