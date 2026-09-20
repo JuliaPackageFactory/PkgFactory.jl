@@ -31,7 +31,7 @@ function main()
 
     API.check_repo(owner, repo) || error("Create $full_name before running E2E.")
     user = API.get_authenticated_user()
-    run(addenv(`$gh auth setup-git`, API._git_path_environment()))
+    run(`$gh auth setup-git`)
 
     # Keep this checkout for the next workflow step, which runs without the PAT.
     destination = joinpath(mktempdir(; cleanup = false), repo)
