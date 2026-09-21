@@ -26,4 +26,5 @@ julia> import {{{PKG}}}; {{{PKG}}}.hello()
 ## Documentation
 
 - Home: https://{{{OWNER}}}.github.io/{{{PKG}}}.jl
+- Examples: https://{{{OWNER}}}.github.io/{{{PKG}}}.jl/dev/examples/
 - API Reference: https://{{{OWNER}}}.github.io/{{{PKG}}}.jl/dev/api
