@@ -35,7 +35,8 @@ Default tests use test doubles and temporary local Git repositories. They do not
 
 Run **Actions → Template repositories E2E → Run workflow** on `main` to publish
 and test the `Minimum`, `Simple`, and `AllInOne` templates. Create the three
-repositories (`Minimum.jl`, `Simple.jl`, and `AllInOne.jl`) before the first run.
+repositories (`PkgFactoryMinimum.jl`, `PkgFactorySimple.jl`, and
+`PkgFactoryAllInOne.jl`) before the first run.
 An empty repository receives its first commit; subsequent runs preserve its UUID
 and history. Repositories with commits must have a matching `Project.toml` on
 `main`.
@@ -60,8 +61,9 @@ template. Identical output creates no commit. Concurrent remote edits cause the
 push to fail without rewriting history.
 
 The workflow is manual and separate from normal CI. It does not wait for the
-generated repositories' own workflows. Documentation deployment in `Simple.jl`
-and `AllInOne.jl` requires a deploy key and `DOCUMENTER_KEY`, configured separately.
+generated repositories' own workflows. Documentation deployment in
+`PkgFactorySimple.jl` and `PkgFactoryAllInOne.jl` requires a deploy key and
+`DOCUMENTER_KEY`, configured separately.
 Local tests exercise the publishing helper against temporary Git repositories.
 
 OAuth Device Flow Sequence Diagram:

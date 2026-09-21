@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [Minimum, Simple, AllInOne]
+        package: [PkgFactoryMinimum, PkgFactorySimple, PkgFactoryAllInOne]
     steps:
       - uses: actions/checkout@v7
         with:

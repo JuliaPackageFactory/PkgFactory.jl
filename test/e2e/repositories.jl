@@ -16,14 +16,18 @@ function main()
     required_env("GH_TOKEN")
     owner = required_env("PKGFACTORY_E2E_OWNER")
     name = required_env("PKGFACTORY_E2E_PACKAGE")
-    templates = Dict("Minimum" => "minimum", "Simple" => "simple", "AllInOne" => "all-in-one")
+    templates = Dict(
+        "PkgFactoryMinimum" => "minimum",
+        "PkgFactorySimple" => "simple",
+        "PkgFactoryAllInOne" => "all-in-one",
+    )
     haskey(templates, name) || error("Unsupported E2E package: $name")
     PkgFactory.Verifications.verify_owner_name(owner) == "OK" || error("Invalid E2E owner")
     template = templates[name]
     repo = "$name.jl"
     full_name = "$owner/$repo"
     authors = ["PkgFactory CI"]
-    description = "PkgFactory $template template integration test"
+    description = "Integration tests for the `$template` template of [PkgFactory.jl](https://github.com/ohno/PkgFactory.jl)."
     gh = API.gh_executable()
     git = API.git_executable()
     source_sha = required_env("GITHUB_SHA")
