@@ -6,11 +6,11 @@
 [![Build Status](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl)
 
-PkgFactory.jl creates GitHub repositories from three Julia package templates: [TemplateMinimum.jl](https://github.com/JuliaPackageFactory/TemplateMinimum.jl), [TemplateSimple.jl](https://github.com/JuliaPackageFactory/TemplateSimple.jl), and [TemplateAllInOne.jl](https://github.com/JuliaPackageFactory/TemplateAllInOne.jl). For more fine-grained customization, use [PkgTemplates.jl](https://juliaci.github.io/PkgTemplates.jl/stable/).
+This is a Julia package to create a GitHub repository and deploy Julia package templates. Three templates are available: [TemplateMinimum.jl](https://github.com/JuliaPackageFactory/TemplateMinimum.jl), [TemplateSimple.jl](https://github.com/JuliaPackageFactory/TemplateSimple.jl), and [TemplateAllInOne.jl](https://github.com/JuliaPackageFactory/TemplateAllInOne.jl). For more fine-grained customization, use [PkgTemplates.jl](https://juliaci.github.io/PkgTemplates.jl/stable/).
 
 ## Quick Start
 
-Run the following command in the Julia REPL or a notebook:
+Run the following command in the Julia REPL:
 
 ```julia
 import Pkg; Pkg.add(url="https://github.com/JuliaPackageFactory/PkgFactory.jl.git")
@@ -30,29 +30,6 @@ remains available as `PkgFactory.LocalUI.CLI()`.
 
 For HTTPS deployment, rate limits, and recovery requirements, see the
 [Web UI hosting guide](docs/src/hosting.md).
-
-## Jupyter Notebook
-
-Notebook workflows separate configuration, preview, authentication, and the
-GitHub-changing operation into individual cells:
-
-```julia
-config = PkgFactory.PackageConfig(
-    owner = "octocat",
-    name = "MyPkg",
-    authors = ["The Octocat"],
-    description = "A package created from Jupyter",
-)
-plan = PkgFactory.preview(config)
-display(plan)
-
-github = PkgFactory.github_device_login()
-PkgFactory.create!(plan; backend = github)
-```
-
-`preview` performs no network requests. The OAuth access token is kept inside
-a redacted in-memory object and is not included in the plan. See the runnable
-[Jupyter example](examples/PkgFactory.ipynb).
 
 ## Documentation
 
