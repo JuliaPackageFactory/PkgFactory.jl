@@ -34,7 +34,7 @@ jobs:
         id: generate
         env:
           GH_TOKEN: ${{ secrets.PKGFACTORY_E2E_TOKEN }}
-          PKGFACTORY_E2E_OWNER: ${{ vars.PKGFACTORY_E2E_OWNER }}
+          PKGFACTORY_E2E_OWNER: ${{ github.repository_owner }}
           PKGFACTORY_E2E_PACKAGE: ${{ matrix.package }}
         run: julia --project=. --startup-file=no test/e2e/repositories.jl
       - name: Test generated package

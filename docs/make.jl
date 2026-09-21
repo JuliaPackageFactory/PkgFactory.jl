@@ -1,6 +1,6 @@
 include("build.jl")
 
 deploydocs(;
-    repo="github.com/ohno/PkgFactory.jl",
+    repo="github.com/JuliaPackageFactory/PkgFactory.jl",
     devbranch="main",
 )

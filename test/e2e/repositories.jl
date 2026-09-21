@@ -27,7 +27,7 @@ function main()
     repo = "$name.jl"
     full_name = "$owner/$repo"
     authors = ["PkgFactory CI"]
-    description = "Integration tests for the `$template` template of [PkgFactory.jl](https://github.com/ohno/PkgFactory.jl)."
+    description = "Integration tests for the `$template` template of [PkgFactory.jl](https://github.com/JuliaPackageFactory/PkgFactory.jl)."
     gh = API.gh_executable()
     git = API.git_executable()
     source_sha = required_env("GITHUB_SHA")

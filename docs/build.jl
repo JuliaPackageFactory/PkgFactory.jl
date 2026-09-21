@@ -9,7 +9,7 @@ makedocs(;
     authors="Shuhei Ohno",
     sitename="PkgFactory.jl",
     format=Documenter.HTML(;
-        canonical="https://ohno.github.io/PkgFactory.jl",
+        canonical="https://juliapackagefactory.github.io/PkgFactory.jl",
         edit_link="main",
         assets=["assets/logo.ico"],
     ),

@@ -36,17 +36,19 @@ Default tests use test doubles and temporary local Git repositories. They do not
 Run **Actions → Template repositories E2E → Run workflow** on `main` to publish
 and test the `Minimum`, `Simple`, and `AllInOne` templates. Create the three
 repositories (`PkgFactoryMinimum.jl`, `PkgFactorySimple.jl`, and
-`PkgFactoryAllInOne.jl`) before the first run.
+`PkgFactoryAllInOne.jl`) under the same owner as PkgFactory.jl
+(`JuliaPackageFactory`) before the first run. The workflow derives
+`PKGFACTORY_E2E_OWNER` from `github.repository_owner`; no Actions variable is
+required.
 An empty repository receives its first commit; subsequent runs preserve its UUID
 and history. Repositories with commits must have a matching `Project.toml` on
 `main`.
 
-Set these values under **Settings → Secrets and variables → Actions**:
+Set this secret under **Settings → Secrets and variables → Actions**:
 
 | Type | Name | Value |
 | :--- | :--- | :--- |
-| Secret | `PKGFACTORY_E2E_TOKEN` | A fine-grained PAT limited to the three template repositories |
-| Variable | `PKGFACTORY_E2E_OWNER` | Repository owner, such as `ohno` |
+| Secret | `PKGFACTORY_E2E_TOKEN` | A fine-grained PAT with `JuliaPackageFactory` as its resource owner, limited to the three template repositories |
 
 The PAT needs **Contents: Read and write**, **Workflows: Read and write**, and
 **Metadata: Read-only**. No Administration, Secrets, or Actions permissions are
