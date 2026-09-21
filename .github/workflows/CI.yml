@@ -49,6 +49,7 @@ jobs:
     permissions:
       actions: write # needed to allow julia-actions/cache to proactively delete old caches that it has created
       contents: write
+      pages: write # needed to request a Pages build after pushing with GITHUB_TOKEN
       statuses: write
     steps:
       - uses: actions/checkout@v7
@@ -66,7 +67,6 @@ jobs:
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
       - name: Run doctests
         shell: julia --project=docs --color=yes {0}
         run: |
@@ -74,3 +74,9 @@ jobs:
           using PkgFactory
           DocMeta.setdocmeta!(PkgFactory, :DocTestSetup, :(using PkgFactory); recursive=true)
           doctest(PkgFactory)
+      # Pushes made with GITHUB_TOKEN do not automatically trigger GitHub Pages.
+      - name: Request GitHub Pages build
+        if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds"

@@ -31,6 +31,19 @@ julia -i -E 'using Revise; import Pkg; Pkg.activate("."); using PkgFactory; PkgF
 
 Default tests use test doubles and temporary local Git repositories. They do not write to GitHub.
 
+## Documentation deployment
+
+The documentation job authenticates with `GITHUB_TOKEN` to push the versioned
+site to `gh-pages`. It does not use `DOCUMENTER_KEY`, because deploy keys are
+disabled for this repository. Keep GitHub Pages configured to deploy from
+`gh-pages` at `/ (root)`.
+
+Pushes authenticated with `GITHUB_TOKEN` do not automatically start a Pages
+build, so the job explicitly requests one through the GitHub API after a
+successful deployment and doctests. This requires `contents: write` and
+`pages: write`. Pull requests build and test the docs without requesting a
+Pages build.
+
 ## Template repository tests
 
 Run **Actions → Template repositories E2E → Run workflow** on `main` to publish
