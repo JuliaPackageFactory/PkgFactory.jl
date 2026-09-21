@@ -1,5 +1,5 @@
 """
-This module contains functions for generating the package from the [templates](https://github.com/ohno/PkgFactory.jl/tree/main/templates) directory using [Mustache.jl](https://github.com/jverzani/Mustache.jl).
+This module contains functions for generating the package from the [templates](https://github.com/JuliaPackageFactory/PkgFactory.jl/tree/main/templates) directory using [Mustache.jl](https://github.com/jverzani/Mustache.jl).
 """
 module Templates
 
