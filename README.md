@@ -6,7 +6,7 @@
 [![Build Status](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl)
 
-This is a Julia package to create a GitHub repository and deploy Julia package templates. If you want to customize it, please use [PkgTemplates.jl](https://juliaci.github.io/PkgTemplates.jl/stable/).
+PkgFactory.jl creates GitHub repositories from three Julia package templates: [TemplateMinimum.jl](https://github.com/JuliaPackageFactory/TemplateMinimum.jl), [TemplateSimple.jl](https://github.com/JuliaPackageFactory/TemplateSimple.jl), and [TemplateAllInOne.jl](https://github.com/JuliaPackageFactory/TemplateAllInOne.jl). For more fine-grained customization, use [PkgTemplates.jl](https://juliaci.github.io/PkgTemplates.jl/stable/).
 
 ## Quick Start
 
