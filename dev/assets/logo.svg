@@ -1,11 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
-     width="325pt" height="300pt" viewBox="0 0 325 300"
-     role="img" aria-labelledby="title desc">
-  <title id="title">PkgFactory.jl</title>
-  <desc id="desc">An abstract factory with three green, red, and purple triangular roofs above a blue base with three transparent square windows.</desc>
-  <polygon points="37.5,158 113.5,70 113.5,158" fill="#389826"/>
-  <polygon points="124.5,158 200.5,70 200.5,158" fill="#CB3C33"/>
-  <polygon points="211.5,158 287.5,70 287.5,158" fill="#9558B2"/>
-  <path d="M 37.5 169 h 250 v 61 h -250 Z M 66.5 190.5 v 18 h 18 v -18 Z M 153.5 190.5 v 18 h 18 v -18 Z M 240.5 190.5 v 18 h 18 v -18 Z" fill="#4063D8" fill-rule="evenodd"/>
+<svg
+  version="1.1"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  width="300pt"
+  height="300pt"
+  viewBox="0 0 300 300"
+>
+
+  <!-- auxiliary -->
+  <!-- <rect width="300" height="300" fill="#FFFFFF"/> -->
+  <!-- <rect width="250" height="250" x="25" y="25" fill="none" stroke="#24292E" stroke-width="9"/> -->
+  <!-- <circle cx="150" cy="150" r="125" stroke="#24292E" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" fill="none"/> -->
+
+  <!-- smoke -->
+  <circle fill="#CB3C33" r="20" cx="80"  cy="64"/>
+  <circle fill="#CB3C33" r="20" cx="100" cy="64"/>
+  <circle fill="#389826" r="20" cx="150" cy="51"/>
+  <circle fill="#389826" r="20" cx="170" cy="51"/>
+  <circle fill="#9558B2" r="20" cx="220" cy="38"/>
+  <circle fill="#9558B2" r="20" cx="240" cy="38"/>
+
+  <!-- chimney -->
+  <path fill="#4063D8" d="M70 94 h20 q2 0 2.5 2 l3 17 q0.5 2 -1.5 2 h-28 q-2 0 -1.5 -2 l3 -17 q0.5 -2 2.5 -2 z"/>
+  <path fill="#4063D8" d="M64 125 h32 q2 0 2.5 2 l3 27 q0.5 2 -1.5 2 h-40 q-2 0 -1.5 -2 l3 -27 q0.5 -2 2.5 -2 z"/>
+  <path fill="#4063D8" d="M140 94 h20 q2 0 2.5 2 l3 17 q0.5 2 -1.5 2 h-28 q-2 0 -1.5 -2 l3 -17 q0.5 -2 2.5 -2 z"/>
+  <path fill="#4063D8" d="M134 125 h32 q2 0 2.5 2 l3 27 q0.5 2 -1.5 2 h-40 q-2 0 -1.5 -2 l3 -27 q0.5 -2 2.5 -2 z"/>
+  <!-- <path fill="#4063D8" d="M210 94 h20 q2 0 2.5 2 l3 17 q0.5 2 -1.5 2 h-28 q-2 0 -1.5 -2 l3 -17 q0.5 -2 2.5 -2 z"/> -->
+  <!-- <path fill="#4063D8" d="M204 125 h32 q2 0 2.5 2 l3 27 q0.5 2 -1.5 2 h-40 q-2 0 -1.5 -2 l3 -27 q0.5 -2 2.5 -2 z"/> -->
+
+  <!-- building -->
+  <!-- <rect fill="#4063D8" stroke="#4063D8" stroke-width="9" x="25"  y="250" width="250" height="25" rx="4.5"/> -->
+  <path fill="#4063D8" fill-rule="evenodd" d="
+    M44 166h212a14 14 0 0 1 14 14v76a14 14 0 0 1 -14 14H44a14 14 0 0 1 -14 -14v-76a14 14 0 0 1 14 -14Z
+    M58 190h44a4 4 0 0 1 4 4v20a4 4 0 0 1 -4 4H58a4 4 0 0 1 -4 -4v-20a4 4 0 0 1 4 -4Z
+    M128 190h44a4 4 0 0 1 4 4v20a4 4 0 0 1 -4 4H128a4 4 0 0 1 -4 -4v-20a4 4 0 0 1 4 -4Z
+    M198 190h44a4 4 0 0 1 4 4v20a4 4 0 0 1 -4 4H198a4 4 0 0 1 -4 -4v-20a4 4 0 0 1 4 -4Z
+  "/>
+
 </svg>
