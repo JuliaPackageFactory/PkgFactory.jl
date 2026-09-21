@@ -46,16 +46,19 @@ Pages build.
 
 ## Template repository tests
 
-Run **Actions → Template repositories E2E → Run workflow** on `main` to publish
-and test the `Minimum`, `Simple`, and `AllInOne` templates. Create the three
-repositories (`PkgFactoryMinimum.jl`, `PkgFactorySimple.jl`, and
-`PkgFactoryAllInOne.jl`) under the same owner as PkgFactory.jl
+Changes under `templates/` pushed to `main` automatically publish and test the
+`Minimum`, `Simple`, and `AllInOne` templates. You can also run **Actions →
+Template repositories E2E → Run workflow** on `main`. Create the three
+repositories (`TemplateMinimum.jl`, `TemplateSimple.jl`, and
+`TemplateAllInOne.jl`) under the same owner as PkgFactory.jl
 (`JuliaPackageFactory`) before the first run. The workflow derives
 `PKGFACTORY_E2E_OWNER` from `github.repository_owner`; no Actions variable is
 required.
 An empty repository receives its first commit; subsequent runs preserve its UUID
 and history. Repositories with commits must have a matching `Project.toml` on
-`main`.
+`main`. For the repository rename, the corresponding old package names
+(`PkgFactoryMinimum`, `PkgFactorySimple`, and `PkgFactoryAllInOne`) are also
+accepted; the next run updates the package name while preserving its UUID.
 
 Set this secret under **Settings → Secrets and variables → Actions**:
 
@@ -75,9 +78,9 @@ outside the current template are retained, including files removed from a newer
 template. Identical output creates no commit. Concurrent remote edits cause the
 push to fail without rewriting history.
 
-The workflow is manual and separate from normal CI. It does not wait for the
-generated repositories' own workflows. Documentation deployment in
-`PkgFactorySimple.jl` and `PkgFactoryAllInOne.jl` requires a deploy key and
+The workflow is separate from normal CI and only publishes from `main`. It does
+not wait for the generated repositories' own workflows. Documentation deployment in
+`TemplateSimple.jl` and `TemplateAllInOne.jl` requires a deploy key and
 `DOCUMENTER_KEY`, configured separately.
 Local tests exercise the publishing helper against temporary Git repositories.
 

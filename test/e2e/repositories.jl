@@ -17,9 +17,9 @@ function main()
     owner = required_env("PKGFACTORY_E2E_OWNER")
     name = required_env("PKGFACTORY_E2E_PACKAGE")
     templates = Dict(
-        "PkgFactoryMinimum" => "minimum",
-        "PkgFactorySimple" => "simple",
-        "PkgFactoryAllInOne" => "all-in-one",
+        "TemplateMinimum" => "minimum",
+        "TemplateSimple" => "simple",
+        "TemplateAllInOne" => "all-in-one",
     )
     haskey(templates, name) || error("Unsupported E2E package: $name")
     PkgFactory.Verifications.verify_owner_name(owner) == "OK" || error("Invalid E2E owner")
@@ -43,7 +43,10 @@ function main()
     branch = strip(read(`$git -C $destination symbolic-ref --short HEAD`, String))
     branch == "main" || error("Expected main as the default branch of $full_name.")
     old_sha = snapshot_head(git, destination)
-    package_uuid = snapshot_uuid(git, destination, name)
+    # The repositories were renamed before their generated packages. Accept
+    # only the corresponding old name, preserving the existing package UUID.
+    previous_name = replace(name, r"^Template" => "PkgFactory")
+    package_uuid = snapshot_uuid(git, destination, name; previous_name)
     expected = PkgFactory.Templates.generate_template_files_dict(
         owner, repo, authors, description, template; package_uuid,
     )

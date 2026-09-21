@@ -9,10 +9,11 @@ function snapshot_head(git, directory)
     error("Failed to read the E2E checkout's HEAD.")
 end
 
-function snapshot_uuid(git, directory, name)
+function snapshot_uuid(git, directory, name; previous_name = nothing)
     isnothing(snapshot_head(git, directory)) && return string(uuid4())
     project = TOML.parsefile(joinpath(directory, "Project.toml"))
-    project["name"] == name || error("Expected package $name in the E2E checkout.")
+    (project["name"] == name || project["name"] == previous_name) ||
+        error("Expected package $name in the E2E checkout.")
     return string(UUID(project["uuid"]))
 end
 

@@ -27,6 +27,41 @@ include("sync.jl")
     end
 end
 
+@testset "renamed template repositories preserve UUID and history" begin
+    git = PkgFactory.LocalAPI.git_executable()
+    for (suffix, template) in [("Minimum", "minimum"), ("Simple", "simple"), ("AllInOne", "all-in-one")]
+        @testset "$template" begin
+            mktempdir() do root
+                remote = joinpath(root, "remote.git")
+                checkout = joinpath(root, "checkout")
+                run(`$git init --bare --initial-branch=main $remote`)
+                run(`$git -c init.defaultBranch=main clone --single-branch $remote $checkout`)
+                run(`$git -C $checkout config user.name E2E`)
+                run(`$git -C $checkout config user.email e2e@example.invalid`)
+                run(`$git -C $checkout config core.autocrlf false`)
+                previous_name = "PkgFactory$suffix"
+                name = "Template$suffix"
+                package_uuid = snapshot_uuid(git, checkout, previous_name)
+                generate(pkg) = PkgFactory.Templates.generate_template_files_dict(
+                    "JuliaPackageFactory", "$pkg.jl", ["PkgFactory CI"], "E2E", template; package_uuid,
+                )
+                @test publish_template_snapshot(git, checkout, generate(previous_name), "Before rename")
+                old_sha = snapshot_head(git, checkout)
+                @test_throws ErrorException snapshot_uuid(git, checkout, name)
+                @test_throws ErrorException snapshot_uuid(git, checkout, name; previous_name = "Unrelated")
+                @test snapshot_uuid(git, checkout, name; previous_name) == package_uuid
+                files = generate(name)
+                @test publish_template_snapshot(git, checkout, files, "Rename package")
+                @test snapshot_uuid(git, checkout, name) == package_uuid
+                @test success(`$git -C $checkout merge-base --is-ancestor $old_sha HEAD`)
+                @test snapshot_head(git, checkout) == strip(read(`$git --git-dir=$remote rev-parse main`, String))
+                @test all(read(joinpath(checkout, split(path, '/')...), String) == content for (path, content) in files)
+                @test !publish_template_snapshot(git, checkout, files, "Unchanged")
+            end
+        end
+    end
+end
+
 @testset "E2E snapshot publishing with local Git" begin
     git = PkgFactory.LocalAPI.git_executable()
     mktempdir() do root
