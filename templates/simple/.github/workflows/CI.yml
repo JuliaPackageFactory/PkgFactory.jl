@@ -21,6 +21,7 @@ jobs:
     permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
       actions: write
       contents: read
+      id-token: write # authenticate Codecov uploads with GitHub OIDC
     strategy:
       fail-fast: false
       matrix:
@@ -42,7 +43,7 @@ jobs:
         if: matrix.version == '1'
         with:
           files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           fail_ci_if_error: false
   docs:
     name: Documentation

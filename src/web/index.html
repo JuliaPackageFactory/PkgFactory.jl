@@ -146,7 +146,7 @@
             <span class="step-badge">4</span>
             <div>
               <div class="title-row"><h2>Configure automation</h2><span class="step-state is-optional">Optional</span></div>
-              <p id="automation-description" aria-live="polite">Documenter keys are generated automatically. Add coverage or resume a previous setup here.</p>
+              <p id="automation-description" aria-live="polite">Documenter keys are generated automatically. Coverage uploads require no token. You can also resume a previous setup here.</p>
             </div>
           </div>
           <div class="card-body">
@@ -157,11 +157,11 @@
               </div>
               <span id="documenter-state" class="configured-pill">Automatic</span>
             </div>
-            <label id="codecov-field" class="field">
-              <span>Codecov upload token</span>
-              <input id="codecov-token" name="codecov_token" type="password" autocomplete="off" placeholder="Leave blank to skip CODECOV_TOKEN" aria-describedby="codecov-description">
-              <small id="codecov-description">Optional: leave blank to skip configuring Codecov.</small>
-            </label>
+            <div id="codecov-field" class="field">
+              <span>Codecov coverage</span>
+              <small id="codecov-description">No upload token is required. Sign in to Codecov and allow its GitHub App to access the repository.</small>
+              <a href="https://app.codecov.io/" target="_blank" rel="noreferrer">Open Codecov</a>
+            </div>
             <label class="check-field">
               <input id="resume" name="resume" type="checkbox">
               <span><strong>Resume interrupted setup</strong><small>Continue a setup whose template commit contains a matching PkgFactory recovery marker. Use the original settings.</small></span>

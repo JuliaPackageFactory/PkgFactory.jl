@@ -84,6 +84,11 @@ not wait for the generated repositories' own workflows. Documentation deployment
 `DOCUMENTER_KEY`, configured separately.
 Local tests exercise the publishing helper against temporary Git repositories.
 
+Simple and AllInOne upload coverage using GitHub OIDC. No `CODECOV_TOKEN` secret
+is needed in the template repositories. Sign in to Codecov and give its GitHub
+App access to both repositories. Coverage is uploaded by their own CI workflows;
+the PkgFactory E2E workflow does not upload coverage on their behalf.
+
 OAuth Device Flow Sequence Diagram:
 
 ```mermaid

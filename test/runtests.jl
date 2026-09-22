@@ -460,7 +460,11 @@ end
     @test !occursin("JET_TEST", simple_ci)
     @test occursin("julia-actions/julia-processcoverage", simple_ci)
     @test occursin("codecov/codecov-action", simple_ci)
-    @test occursin(raw"token: ${{ secrets.CODECOV_TOKEN }}", simple_ci)
+    for (workflow, uploads) in ((simple_ci, 1), (all_ci, 2))
+        @test count("use_oidc: true", workflow) == uploads
+        @test count("id-token: write", workflow) == uploads
+        @test !occursin("secrets.CODECOV_TOKEN", workflow)
+    end
 
     for path in (
         ".github/dependabot.yml",
@@ -947,7 +951,6 @@ end
                 "3",
                 "2",
                 "",
-                "codecov-secret",
                 "",
                 "y",
             ],
@@ -997,20 +1000,14 @@ end
     @test occursin("2. private", text)
     @test occursin("Select visibility (default: 1):", text)
     @test occursin("Initial commit message (default: Using PkgFactory.jl):", text)
-    @test occursin(
-        "Codecov token (optional, example: 01234567-89ab-cdef-0123-456789abcdef):",
-        text,
-    )
-    @test occursin("How to get a Codecov upload token:", text)
-    @test occursin("qumpoo Settings > Global Upload Token", text)
-    @test occursin("https://docs.codecov.com/docs/codecov-tokens", text)
+    @test !occursin("Codecov token", text)
+    @test !occursin("Global Upload Token", text)
     @test occursin("Please answer y or n.", text)
     @test length(
         collect(eachmatch(r"Create this repository\? \(example: y\) \(y/n\):", text)),
     ) == 2
-    @test occursin("Codecov:     configured", text)
-    @test first(findfirst("Codecov token", text)) <
-          first(findfirst("Package configuration", text)) <
+    @test occursin("Codecov:     not included", text)
+    @test first(findfirst("Package configuration", text)) <
           first(findfirst("Create this repository?", text))
     @test !occursin("codecov-secret", text)
     @test length(creator.calls) == 1
@@ -1021,13 +1018,37 @@ end
         "MyPkg.jl",
         ["Alice", "Bob"],
         "My package description",
-        "codecov-secret",
+        "",
     )
     @test call.options.template_name == "minimum"
     @test call.options.visibility == "private"
     @test call.options.commit_message == "Using PkgFactory.jl"
     @test !call.options.resume
     @test call.args[5] isa String
+end
+
+@testset "local UI coverage needs no token" begin
+    for (kind, template) in ((:user, "simple"), (:organization, "all-in-one"))
+        creator = FakePackageCreator(Any[], true)
+        output = IOBuffer()
+        @test PkgFactory.LocalUI.CLI(;
+            input = IOBuffer("1\nCoveragePkg\nAlice\nCoverage example\n\n\n\ny\n"),
+            output,
+            environment = Dict("CODECOV_TOKEN" => "unused-legacy-token"),
+            secret_reader = () -> error("Coverage must not prompt for a secret"),
+            status_checker = () -> true,
+            package_creator = creator,
+            repository_checker = (owner, repo) -> false,
+            registered_package_names_provider = package -> String[],
+            repository_owners_provider = () -> [(login = "example", name = "Example", kind)],
+            templates_provider = () -> [template],
+        )
+        @test only(creator.calls).args[5] == ""
+        text = String(take!(output))
+        @test occursin("OIDC (no token required)", text)
+        @test occursin("allow the Codecov GitHub App", text)
+        @test !occursin("Please answer y or n.", text)
+    end
 end
 
 @testset "resume existing repository from local UI" begin
@@ -1069,7 +1090,8 @@ end
     @test occursin("Repository ohno/MyPkg.jl already exists.", text)
     @test occursin("Resume its setup? (default: n) (y/n):", text)
     @test occursin("1. all-in-one (default)", text)
-    @test occursin("Codecov:     skipped", text)
+    @test occursin("Codecov:     OIDC (no token required)", text)
+    @test occursin("https://app.codecov.io/", text)
     @test only(creator.calls).args[5] == ""
     @test only(creator.calls).options.template_name == "all-in-one"
     @test only(creator.calls).options.resume
@@ -1106,7 +1128,7 @@ end
     )
     @test isempty(creator.calls)
     text = String(take!(output))
-    @test occursin("Codecov:     skipped", text)
+    @test occursin("Codecov:     OIDC (no token required)", text)
     @test occursin("no repository was created", text)
 end
 

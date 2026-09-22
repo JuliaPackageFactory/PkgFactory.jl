@@ -318,7 +318,6 @@ function _print_summary(
     visibility::String,
     commit_message::String,
     resume::Bool,
-    codecov_configured::Bool,
 )
     println(output, "\nPackage configuration")
     println(output, "  Repository:  $(owner_name)/$(repo_name)")
@@ -328,7 +327,8 @@ function _print_summary(
     println(output, "  Visibility:  $(visibility)")
     println(output, "  Commit:      $(commit_message)")
     println(output, "  Resume:      $(resume ? "yes" : "no")")
-    println(output, "  Codecov:     $(codecov_configured ? "configured" : "skipped")")
+    coverage = template_name in ("simple", "all-in-one") ? "OIDC (no token required)" : "not included"
+    println(output, "  Codecov:     $coverage")
     return nothing
 end
 
@@ -423,27 +423,9 @@ function CLI(;
         "Initial commit message";
         default = "Using PkgFactory.jl",
     )
-    codecov_token = String(strip(string(get(environment, "CODECOV_TOKEN", ""))))
-    if isempty(codecov_token)
-        println(output, "\nHow to get a Codecov upload token:")
-        println(output, "  1. Sign in at https://app.codecov.io/.")
-        println(
-            output,
-            "  2. Open $(owner_name) Settings > Global Upload Token and copy the token.",
-        )
-        println(output, "     Account owner or organization administrator access is required.")
-        println(output, "  Guide: https://docs.codecov.com/docs/codecov-tokens")
-        codecov_token = _prompt_secret(
-            input,
-            output,
-            "Codecov token";
-            example = "01234567-89ab-cdef-0123-456789abcdef",
-            required = false,
-            secret_reader = secret_reader,
-        )
-        codecov_token = String(strip(codecov_token))
-    else
-        println(output, "Using the Codecov token from CODECOV_TOKEN.")
+    if template_name in ("simple", "all-in-one")
+        println(output, "\nCoverage uploads use GitHub OIDC; no Codecov token is required.")
+        println(output, "Sign in at https://app.codecov.io/ and allow the Codecov GitHub App to access the repository.")
     end
 
     _print_summary(
@@ -456,7 +438,6 @@ function CLI(;
         visibility,
         commit_message,
         resume,
-        !isempty(codecov_token),
     )
     _prompt_yes_no(input, output, "Create this repository?") || begin
         println(output, "Cancelled: no repository was created.")
@@ -470,7 +451,7 @@ function CLI(;
             repo_name,
             author_names,
             package_description,
-            codecov_token;
+            "";
             template_name = template_name,
             visibility = visibility,
             commit_message = commit_message,

@@ -166,14 +166,13 @@ function updateTemplateAutomation() {
     ? "The minimum template does not include documentation deployment."
     : "Deploy key and DOCUMENTER_KEY repository secret";
   $("#codecov-field").classList.toggle("is-disabled", minimum);
-  $("#codecov-token").disabled = minimum;
-  $("#codecov-token").placeholder = minimum ? "Not needed for minimum" : "Leave blank to skip CODECOV_TOKEN";
+  $("#codecov-field").hidden = minimum;
   $("#codecov-description").textContent = minimum
     ? "No input needed: the minimum template does not use Codecov."
-    : "Optional: leave blank to skip configuring Codecov.";
+    : "No upload token is required. Sign in to Codecov and allow its GitHub App to access the repository.";
   $("#automation-description").textContent = minimum
     ? "Documenter and Codecov are not needed for minimum. You can still resume a previous setup."
-    : "Documenter keys are generated automatically. Add coverage or resume a previous setup here.";
+    : "Documenter keys are generated automatically. Coverage uploads require no token. You can also resume a previous setup here.";
   $("#create-description").textContent = minimum
     ? "PkgFactory will create the repository and commit the minimum template with CI."
     : "PkgFactory will create the repository, commit the template, add gh-pages, and configure secrets.";
@@ -263,7 +262,6 @@ function packagePayload() {
     template: $("#template").value,
     visibility: $("#visibility").value,
     commit_message: $("#commit-message").value.trim(),
-    codecov_token: $("#template").value === "minimum" ? "" : $("#codecov-token").value.trim(),
     resume: $("#resume").checked,
   };
 }
@@ -319,7 +317,6 @@ async function createPackage(event) {
     setError(message);
     $("#form-error").scrollIntoView({ behavior: "smooth", block: "center" });
   } finally {
-    if (state.creationStatus !== "checking") $("#codecov-token").value = "";
     if (state.creationStatus !== "success") setCreationStatus("idle");
   }
 }

@@ -29,8 +29,11 @@ PkgFactory.WebUI.start()
 Open `http://127.0.0.1:8000/` in a browser. The web interface authenticates
 with GitHub's OAuth device flow and uses the GitHub API to create the
 repository, commit the selected template, create the `gh-pages` branch, and
-configure the `DOCUMENTER_KEY` secret. The optional Codecov token is encrypted
-into `CODECOV_TOKEN`. The OAuth access token is held only in the current
+configure the `DOCUMENTER_KEY` secret. The Simple and AllInOne templates use
+GitHub OIDC for Codecov uploads, so no Codecov token is required. Sign in to
+[Codecov](https://app.codecov.io/) and allow its GitHub App to access the generated
+repository, under either a personal account or an organization.
+The OAuth access token is held only in the current
 browser tab's memory and is not written to disk or browser storage. The flow
 requests `repo`, `workflow`, `read:user`, and `read:org` permissions so the
 generated commit may include GitHub Actions workflow files.
@@ -59,9 +62,7 @@ PkgFactory.create!(plan; backend = github)
 ```
 
 The device-flow token is kept only in the returned `GitHubAPI` object, whose
-display is always redacted. Optional secrets such as the Codecov token are
-passed only to `create!`, for example
-`create!(plan; backend = github, codecov_token = ENV["CODECOV_TOKEN"])`.
+display is always redacted. Codecov uploads use GitHub OIDC without an upload token.
 The complete example is available in `examples/PkgFactory.ipynb`.
 
 ## Terminal interface
@@ -70,9 +71,12 @@ The complete example is available in `examples/PkgFactory.ipynb`.
 PkgFactory.LocalUI.CLI()
 ```
 
-The interactive interface checks GitHub CLI authentication, lists only repository owners available to the authenticated account, discovers template sets from the `templates/` directory, and presents repository owners, templates, and visibility as numbered choices. `all-in-one` is the default template and `public` is the default visibility. It validates each answer, hides the Codecov token when the terminal supports secure input, and asks for confirmation before creating the repository. Prompts with a default display `(default: VALUE)`; prompts without a default may display `(example: VALUE)`. The final creation confirmation requires an explicit `y` or `n`. Package name availability is checked immediately after entry against both the selected owner's repositories and Julia's General registry. It asks whether to resume only when the selected repository already exists; otherwise, a conflicting name produces unused numeric-suffix suggestions and the selected replacement is rechecked. The generated Git commit uses the authenticated GitHub login and ID-based noreply email so GitHub can attribute it to the correct account.
+The interactive interface checks GitHub CLI authentication, lists only repository owners available to the authenticated account, discovers template sets from the `templates/` directory, and presents repository owners, templates, and visibility as numbered choices. `all-in-one` is the default template and `public` is the default visibility. It validates each answer and asks for confirmation before creating the repository. Prompts with a default display `(default: VALUE)`; prompts without a default may display `(example: VALUE)`. The final creation confirmation requires an explicit `y` or `n`. Package name availability is checked immediately after entry against both the selected owner's repositories and Julia's General registry. It asks whether to resume only when the selected repository already exists; otherwise, a conflicting name produces unused numeric-suffix suggestions and the selected replacement is rechecked. The generated Git commit uses the authenticated GitHub login and ID-based noreply email so GitHub can attribute it to the correct account.
 
-The Codecov token is optional; leave it blank to skip creating the `CODECOV_TOKEN` repository secret. To configure coverage uploads before the new repository exists, use the **Global Upload Token** from the selected account or organization's settings in [Codecov](https://app.codecov.io/). Viewing or generating the token requires account owner or organization administrator access. See the [Codecov token guide](https://docs.codecov.com/docs/codecov-tokens).
+The CLI does not prompt for a Codecov token. Simple and AllInOne configure
+[OIDC authentication](https://github.com/codecov/codecov-action#using-oidc) in CI;
+the minimum template does not use Codecov. Initial Codecov sign-in and GitHub App
+access are still required as described above.
 
 The same workflow is also available as an API:
 
@@ -85,7 +89,7 @@ PkgFactory.LocalAPI.create_package(
 )
 ```
 
-`create_package` uses the authenticated GitHub CLI session. It creates the repository and its initial commit, creates the `gh-pages` branch, and configures the `DOCUMENTER_KEY` repository secret. Pass a Codecov token as the optional fifth argument to also configure `CODECOV_TOKEN`.
+`create_package` uses the authenticated GitHub CLI session. It creates the repository and its initial commit, creates the `gh-pages` branch, and configures the `DOCUMENTER_KEY` repository secret. The optional Codecov token API arguments remain available for compatibility with existing workflows, but the bundled OIDC templates do not need or use `CODECOV_TOKEN`.
 
 Existing repositories are rejected by default. If a previous attempt stopped after creating the repository, call `create_package_with_jll` with `resume = true`. This preserves existing package files and resumes branch and secret setup. A repository with an existing `main` branch must have a matching package name and a UUID in `Project.toml`; otherwise setup is refused.
 

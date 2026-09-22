@@ -88,8 +88,10 @@ caller's GitHub Bearer token. Its state is one of:
 After a failed creation the UI checks this status without automatically retrying.
 Resume requires the original owner, package, authors, description, template,
 visibility and commit message, plus an unchanged Project.toml. Completed matching
-operations return without further writes. Re-enter an optional Codecov token
-when resuming because it is never retained in the marker or service.
+operations return without further writes. The bundled templates use OIDC for
+Codecov, so no coverage token is needed when creating or resuming a package.
+API callers using the legacy optional Codecov token must provide it again when
+resuming because it is never retained in the marker or service.
 
 Repositories made by older versions, or failures after repository creation but
 before the template commit, have no marker. Inspect these manually; do not simply
