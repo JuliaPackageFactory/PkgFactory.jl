@@ -345,12 +345,11 @@ end
         @test occursin("public hello", template["src/MyPkg.jl"])
         @test occursin("julia-actions/setup-julia@v3", template[".github/workflows/CI.yml"])
         @test !occursin("julia-actions/setup-julia@v2", template[".github/workflows/CI.yml"])
-        @test occursin("*.jl text eol=lf", template[".gitattributes"])
         @test occursin("## Quick Start", template["README.md"])
         @test !occursin("## Installation", template["README.md"])
     end
     for template in (all_in_one, simple)
-        @test occursin("Pkg.test()", template["AGENTS.md"])
+        @test occursin("*.jl text eol=lf", template[".gitattributes"])
         @test occursin("prettyurls = get(ENV, \"CI\", \"false\") == \"true\"", template["docs/make.jl"])
         @test occursin("checkdocs = :public", template["docs/make.jl"])
         @test !occursin("Run doctests", template[".github/workflows/CI.yml"])
@@ -358,6 +357,7 @@ end
         @test !occursin("## Installation", template["docs/src/index.md"])
     end
     @test occursin("version = \"0.0.1\"", all_in_one["Project.toml"])
+    @test occursin("Pkg.test()", all_in_one["AGENTS.md"])
     @test occursin("version: \"0.0.1\"", all_in_one["CITATION.cff"])
     project_uuid = only(match(r"uuid = \"([^\"]+)\"", all_in_one["Project.toml"]).captures)
     @test occursin("MyPkg = \"$(project_uuid)\"", all_in_one["docs/Project.toml"])
