@@ -113,6 +113,12 @@ paths_and_contents = PkgFactory.Templates.generate_template_files_dict(
   "all-in-one"
 )
 ```
+
+Use `citation_authors = [(family_names = "Ohno", given_names = "Shuhei")]`
+to provide explicit CFF name parts, in the same order as `author_names`.
+Each entry requires `family_names` and may include `given_names` and `orcid`.
+Without this keyword, full display names are preserved in `family-names`;
+review the name parts in `CITATION.cff` before release.
 """
 function generate_template_files_dict(
     owner_name::String,
@@ -121,7 +127,30 @@ function generate_template_files_dict(
     package_description::String,
     template_name::String;
     package_uuid::Union{Nothing,String} = nothing,
+    citation_authors::Union{Nothing,Vector{<:NamedTuple}} = nothing,
 )::Dict{String,String}
+
+    if isnothing(citation_authors)
+        citation_authors = [(family_names = name,) for name in author_names]
+    end
+    length(citation_authors) == length(author_names) ||
+        throw(ArgumentError("citation_authors must contain one entry per author."))
+    cff_authors = map(citation_authors) do author
+        fields = String[]
+        for (key, prefix) in ((:family_names, "  - family-names: "),
+                              (:given_names, "    given-names: "),
+                              (:orcid, "    orcid: "))
+            value = get(author, key, nothing)
+            if isnothing(value)
+                key == :family_names && throw(ArgumentError("Each citation author needs family_names."))
+                continue
+            end
+            value isa AbstractString && !isempty(strip(value)) ||
+                throw(ArgumentError("Citation author $key must be a nonempty string."))
+            push!(fields, prefix * JSON3.write(value))
+        end
+        join(fields, "\n")
+    end
 
     package_name = replace(repo_name, r"\.jl$" => "")
     ctx = Dict(
@@ -131,7 +160,7 @@ function generate_template_files_dict(
         "DESCR" => package_description,
         "UUID" => isnothing(package_uuid) ? string(UUIDs.uuid4()) : package_uuid,
         "AUTHORS" => author_names,
-        "CFF_AUTHORS" => join(["  - family-names: " * JSON3.write(name) for name in author_names], "\n"),
+        "CFF_AUTHORS" => join(cff_authors, "\n"),
         "LICENSOR" => join(author_names, ", "),
         "URL" => "https://github.com/$(owner_name)/$(repo_name)",
         "VERSION" => "0.0.1",

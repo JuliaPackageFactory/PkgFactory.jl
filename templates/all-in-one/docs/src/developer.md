@@ -71,5 +71,7 @@ This project follows [Semantic Versioning](https://semver.org/) and the [ColPrac
 
 Keep the version values synchronized, and set the citation date to the release date.
 The documentation build uses Bibliography.jl to generate the BibTeX citation from `CITATION.cff`.
+Check each author's `family-names` and `given-names` before release. Add `orcid`
+and DOI `identifiers` only when the corresponding identifiers are available.
 
 To register this package in the [General](https://github.com/JuliaRegistries/General) registry, install [Registrator](https://github.com/JuliaRegistries/Registrator.jl?tab=readme-ov-file#install-registrator) and use it via the [GitHub App](https://github.com/JuliaRegistries/Registrator.jl?tab=readme-ov-file#via-the-github-app).

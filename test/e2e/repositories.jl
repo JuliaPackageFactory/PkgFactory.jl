@@ -27,6 +27,7 @@ function main()
     repo = "$name.jl"
     full_name = "$owner/$repo"
     authors = ["Shuhei Ohno"]
+    citation_authors = [(family_names = "Ohno", given_names = "Shuhei")]
     description = "Integration tests for the `$template` template of [PkgFactory.jl](https://github.com/JuliaPackageFactory/PkgFactory.jl)."
     gh = API.gh_executable()
     git = API.git_executable()
@@ -48,7 +49,7 @@ function main()
     previous_name = replace(name, r"^Template" => "PkgFactory")
     package_uuid = snapshot_uuid(git, destination, name; previous_name)
     expected = PkgFactory.Templates.generate_template_files_dict(
-        owner, repo, authors, description, template; package_uuid,
+        owner, repo, authors, description, template; package_uuid, citation_authors,
     )
     run(`$git -C $destination config user.name $(user.login)`)
     run(`$git -C $destination config user.email $(user.email)`)
