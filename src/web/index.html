@@ -158,8 +158,9 @@
               <span id="documenter-state" class="configured-pill">Automatic</span>
             </div>
             <div id="codecov-field" class="field">
-              <span>Codecov coverage</span>
-              <small id="codecov-description">No upload token is required. Sign in to Codecov and allow its GitHub App to access the repository.</small>
+              <span>Codecov GitHub App</span>
+              <small id="codecov-description">After creating the repository, sign in to Codecov and install or configure its GitHub App to grant access to the new repository. Coverage uploads use GitHub OIDC; no upload token is required.</small>
+              <a href="https://github.com/apps/codecov" target="_blank" rel="noreferrer">Install or configure Codecov GitHub App</a>
               <a href="https://app.codecov.io/" target="_blank" rel="noreferrer">Open Codecov</a>
             </div>
             <label class="check-field">
@@ -195,6 +196,21 @@
                 <a id="repository-link" class="button button-success" href="#" target="_blank" rel="noreferrer">Go to repository</a>
                 <button id="create-another" class="button button-secondary" type="button">Create another package</button>
               </div>
+              <section class="registration-guide" aria-labelledby="registration-title">
+                <h3 id="registration-title">Publish to Julia's General registry</h3>
+                <p>PkgFactory creates the repository. When your public package is ready for release, complete these steps separately to register it in General.</p>
+                <ol>
+                  <li>
+                    <h4>Registrator GitHub App</h4>
+                    <p><a href="https://github.com/apps/juliaregistrator" target="_blank" rel="noreferrer">Install or configure Registrator GitHub App</a> for the repository owner and grant it access to the new repository. The public Registrator service does not support private repositories.</p>
+                  </li>
+                  <li>
+                    <h4>General registration</h4>
+                    <p>Review the <a href="https://github.com/JuliaRegistries/General#registering-a-package-in-general" target="_blank" rel="noreferrer">General registration guidelines</a>, set the release version in <code>Project.toml</code>, and commit your changes. On GitHub, open the commit you want to register and comment <code>@JuliaRegistrator register</code>.</p>
+                    <p>Follow the registration pull request opened by Registrator in General and address any feedback or failed checks. Registration is complete when that pull request is merged.</p>
+                  </li>
+                </ol>
+              </section>
             </div>
           </div>
         </section>

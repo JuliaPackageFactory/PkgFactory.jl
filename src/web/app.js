@@ -169,7 +169,7 @@ function updateTemplateAutomation() {
   $("#codecov-field").hidden = minimum;
   $("#codecov-description").textContent = minimum
     ? "No input needed: the minimum template does not use Codecov."
-    : "No upload token is required. Sign in to Codecov and allow its GitHub App to access the repository.";
+    : "After creating the repository, sign in to Codecov and install or configure its GitHub App to grant access to the new repository. Coverage uploads use GitHub OIDC; no upload token is required.";
   $("#automation-description").textContent = minimum
     ? "Documenter and Codecov are not needed for minimum. You can still resume a previous setup."
     : "Documenter keys are generated automatically. Coverage uploads require no token. You can also resume a previous setup here.";

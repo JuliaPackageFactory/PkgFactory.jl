@@ -183,6 +183,13 @@ input:disabled { color: var(--muted); border-color: var(--border); background: v
 .creation-result h3 { margin: 0; color: var(--text-strong); font-size: 17px; }
 .creation-result p { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
 .success-actions { display: flex; gap: 10px; margin-top: 22px; }
+.registration-guide { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.registration-guide ol { margin: 16px 0 0; padding-left: 22px; }
+.registration-guide li { padding-left: 4px; }
+.registration-guide li + li { margin-top: 16px; }
+.registration-guide h4 { margin: 0; color: var(--text-strong); font-size: 13px; }
+.registration-guide a, #codecov-field a { color: var(--primary); text-underline-offset: 2px; }
+.registration-guide code { overflow-wrap: anywhere; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .app-footer { display: flex; width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 27px 0 38px; justify-content: space-between; gap: 20px; color: var(--muted); border-top: 1px solid var(--border); font-size: 10px; }
