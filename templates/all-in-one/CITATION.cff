@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using this metadata."
+type: software
+title: "{{{PKG}}}.jl"
+authors:
+{{{CFF_AUTHORS}}}
+version: "0.0.1"
+repository-code: "{{{URL}}}"
+license: MIT

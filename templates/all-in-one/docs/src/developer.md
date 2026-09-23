@@ -35,7 +35,7 @@ This is the typical workflow for making changes.
    ```
 2. Start an interactive session with [Revise.jl](https://github.com/timholy/Revise.jl).
    ```sh
-   julia --startup-file=no -i -e 'using Revise; import Pkg; Pkg.activate("."); using {{{PKG}}}'
+   julia --project=. --startup-file=no -i -e 'using Revise; using {{{PKG}}}'
    ```
 3. Change the source code:
    - When making new functions or updating docstrings, refer to [Documenter: Adding docstrings](https://documenter.juliadocs.org/stable/man/guide/#Adding-Some-Docstrings).
@@ -66,6 +66,7 @@ This is the typical workflow for making changes.
 This project follows [Semantic Versioning](https://semver.org/) and the [ColPrac version increment guidelines](https://github.com/SciML/ColPrac?tab=readme-ov-file#incrementing-the-package-version). When bumping the version, update:
 
 - the version in [Project.toml](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/blob/main/Project.toml)
+- the version in `CITATION.cff` and release notes in `CHANGELOG.md`
 - the version, year, and month in [CITATION.bib](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/blob/main/CITATION.bib)
 
 Keep the version values synchronized, and set the citation date to the release date.

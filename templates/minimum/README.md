@@ -1,6 +1,6 @@
 # {{{PKG}}}.jl
 
-[![Julia 1.12+](https://badgen.net/static/Julia/1.12%2B/007ec6?icon=https%3A%2F%2Fraw.githubusercontent.com%2FJuliaLang%2Fjulia-logo-graphics%2Fmaster%2Fimages%2Fjulia-dots.svg)](https://julialang.org/downloads/)
+[![Julia compatibility](https://img.shields.io/badge/Julia-compat-blue?logo=julia)](Project.toml#compat)
 [![CI](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 {{{DESCR}}}
@@ -29,3 +29,15 @@ git clone https://github.com/{{{OWNER}}}/{{{REPO}}}.git
 cd {{{PKG}}}.jl
 julia --project=. --startup-file=no -e 'using Pkg; Pkg.test()'
 ```
+
+## Compatibility and registration
+
+This package requires Julia 1.12 or later because it uses Pkg workspaces for its
+test environment. See `[compat]` in [Project.toml](Project.toml) for the supported
+versions. Before publishing, review `authors` (for example, `"Jane Doe <jane@example.com>"`)
+and the package version in that file.
+
+To register in [General](https://github.com/JuliaRegistries/General), install the
+[Registrator GitHub App](https://github.com/JuliaRegistries/Registrator.jl#via-the-github-app),
+then comment `@JuliaRegistrator register` on the commit containing the version to
+release. Address any registry checks before registration is merged.

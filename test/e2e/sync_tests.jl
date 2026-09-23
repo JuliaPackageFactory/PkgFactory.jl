@@ -56,6 +56,9 @@ end
                 @test success(`$git -C $checkout merge-base --is-ancestor $old_sha HEAD`)
                 @test snapshot_head(git, checkout) == strip(read(`$git --git-dir=$remote rev-parse main`, String))
                 @test all(read(joinpath(checkout, split(path, '/')...), String) == content for (path, content) in files)
+                @test !ispath(joinpath(checkout, "src", "$previous_name.jl"))
+                @test !ispath(joinpath(checkout, "examples", "$previous_name.ipynb"))
+                @test Set(split(read(`$git -C $checkout ls-files -z`, String), '\0'; keepempty = false)) == Set(keys(files))
                 @test !publish_template_snapshot(git, checkout, files, "Unchanged")
             end
         end
@@ -75,7 +78,7 @@ end
         project = "name = \"Minimum\"\nuuid = \"12345678-1234-5678-1234-567812345678\"\n"
         write(joinpath(checkout, "Project.toml"), project)
         write(joinpath(checkout, "README.md"), "old template\n")
-        write(joinpath(checkout, "custom.txt"), "preserve this file\n")
+        write(joinpath(checkout, "obsolete.txt"), "removed from template\n")
         run(`$git -C $checkout add .`)
         run(`$git -C $checkout commit -m Initial`)
         run(`$git -C $checkout remote add origin $remote`)
@@ -91,15 +94,24 @@ end
         @test strip(read(`$git -C $checkout rev-parse HEAD^`, String)) == old_sha
         @test remote_head() == new_sha
         @test read(joinpath(checkout, "Project.toml"), String) == project
-        @test read(joinpath(checkout, "custom.txt"), String) == "preserve this file\n"
+        @test !ispath(joinpath(checkout, "obsolete.txt"))
         @test read(joinpath(checkout, "src", "Minimum.jl"), String) == files["src/Minimum.jl"]
         @test !publish_template_snapshot(git, checkout, files, "No changes")
         @test head() == new_sha
 
-        write(joinpath(checkout, "custom.txt"), "uncommitted edit\n")
+        # Deletion alone must be committed and pushed, even when every retained
+        # file is unchanged (e.g. removal of a redundant quality workflow).
+        pop!(files, "src/Minimum.jl")
+        @test publish_template_snapshot(git, checkout, files, "Remove obsolete source")
+        @test !ispath(joinpath(checkout, "src", "Minimum.jl"))
+        @test head() != new_sha
+        new_sha = head()
+        @test remote_head() == new_sha
+
+        write(joinpath(checkout, "README.md"), "uncommitted edit\n")
         @test_throws ErrorException publish_template_snapshot(git, checkout, files, "Must fail")
         @test remote_head() == new_sha
-        run(`$git -C $checkout restore custom.txt`)
+        run(`$git -C $checkout restore README.md`)
 
         # Another writer advances the remote; publishing from the stale checkout
         # must fail without losing the other writer's commit.

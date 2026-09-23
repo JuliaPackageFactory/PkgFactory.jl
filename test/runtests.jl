@@ -342,10 +342,18 @@ end
     @test haskey(minimum, "src/MyPkg.jl")
     @test haskey(simple, "src/MyPkg.jl")
     for template in (all_in_one, simple, minimum)
+        @test occursin("public hello", template["src/MyPkg.jl"])
+        @test occursin("julia-actions/setup-julia@v3", template[".github/workflows/CI.yml"])
+        @test !occursin("julia-actions/setup-julia@v2", template[".github/workflows/CI.yml"])
+        @test occursin("*.jl text eol=lf", template[".gitattributes"])
+        @test occursin("Pkg.test()", template["AGENTS.md"])
         @test occursin("## Quick Start", template["README.md"])
         @test !occursin("## Installation", template["README.md"])
     end
     for template in (all_in_one, simple)
+        @test occursin("prettyurls = get(ENV, \"CI\", \"false\") == \"true\"", template["docs/make.jl"])
+        @test occursin("checkdocs = :public", template["docs/make.jl"])
+        @test !occursin("Run doctests", template[".github/workflows/CI.yml"])
         @test occursin("## Quick Start", template["docs/src/index.md"])
         @test !occursin("## Installation", template["docs/src/index.md"])
     end
@@ -385,7 +393,7 @@ end
     @test occursin("Aqua =", all_in_one["test/Project.toml"])
     @test occursin("JET = \"0.9, 0.10, 0.11, 0.12\"", all_in_one["test/Project.toml"])
     @test occursin("Test =", all_in_one["test/Project.toml"])
-    @test occursin("Documenter = \"1\"", all_in_one["docs/Project.toml"])
+    @test occursin("Documenter = \"1.9\"", all_in_one["docs/Project.toml"])
 
     @test !haskey(all_in_one, ".github/workflows/CompatHelper.yml")
     dependabot = all_in_one[".github/dependabot.yml"]
@@ -397,7 +405,7 @@ end
 
     all_ci = all_in_one[".github/workflows/CI.yml"]
     @test !occursin("version: 'min'", all_ci)
-    @test count(==(true), occursin.("- '1.12'", eachline(IOBuffer(all_ci)))) == 2
+    @test count(==(true), occursin.("- 'min'", eachline(IOBuffer(all_ci)))) == 2
     @test count(==(true), occursin.("- 'pre'", eachline(IOBuffer(all_ci)))) == 2
     @test occursin(raw"if: ${{ github.event_name == 'pull_request' }}", all_ci)
     @test occursin(raw"if: ${{ github.event_name != 'pull_request' }}", all_ci)
@@ -421,11 +429,11 @@ end
     @test occursin("pkgdir(MyPkg)", all_in_one["docs/src/index.md"])
     @test !occursin("../../CITATION.bib", all_in_one["docs/src/index.md"])
     @test occursin(r"month\s+= \{[a-z]{3}\}", all_in_one["CITATION.bib"])
-    @test occursin("# Paste the complete output here.", all_in_one[".github/ISSUE_TEMPLATE/bug_report.md"])
-    @test !occursin("8fce2d05", all_in_one[".github/ISSUE_TEMPLATE/bug_report.md"])
-    @test !occursin("Julia Version 1.10.10", all_in_one[".github/ISSUE_TEMPLATE/bug_report.md"])
+    @test occursin("versioninfo()", all_in_one[".github/ISSUE_TEMPLATE/bug_report.yml"])
+    @test occursin("required: true", all_in_one[".github/ISSUE_TEMPLATE/bug_report.yml"])
+    @test !haskey(all_in_one, ".github/ISSUE_TEMPLATE/bug_report.md")
 
-    @test occursin("Documenter = \"1\"", simple["docs/Project.toml"])
+    @test occursin("Documenter = \"1.9\"", simple["docs/Project.toml"])
     simple_project_uuid = only(match(r"uuid = \"([^\"]+)\"", simple["Project.toml"]).captures)
     @test occursin("MyPkg = \"$(simple_project_uuid)\"", simple["docs/Project.toml"])
     @test occursin("MyPkg = \"$(simple_project_uuid)\"", simple["test/Project.toml"])
@@ -450,7 +458,7 @@ end
 
     simple_ci = simple[".github/workflows/CI.yml"]
     @test !occursin("version: 'min'", simple_ci)
-    @test count(==(true), occursin.("- '1.12'", eachline(IOBuffer(simple_ci)))) == 1
+    @test count(==(true), occursin.("- 'min'", eachline(IOBuffer(simple_ci)))) == 1
     @test count(==(true), occursin.("- 'pre'", eachline(IOBuffer(simple_ci)))) == 1
     @test !occursin("macOS-latest", simple_ci)
     @test !occursin("windows-latest", simple_ci)
@@ -468,8 +476,8 @@ end
 
     for path in (
         ".github/dependabot.yml",
-        ".github/ISSUE_TEMPLATE/bug_report.md",
-        ".github/ISSUE_TEMPLATE/feature_request.md",
+        ".github/ISSUE_TEMPLATE/bug_report.yml",
+        ".github/ISSUE_TEMPLATE/feature_request.yml",
         ".github/workflows/Format.yml",
         ".github/workflows/TagBot.yml",
         "CITATION.bib",
@@ -494,9 +502,9 @@ end
     @test !occursin("## Acknowledgments", minimum["README.md"])
     @test !occursin("PkgFactory.jl", minimum["README.md"])
     minimum_ci = minimum[".github/workflows/CI.yml"]
-    @test !occursin("version: 'min'", minimum_ci)
+    @test occursin("version: 'min'", minimum_ci)
     @test !occursin("version: 'pre'", minimum_ci)
-    @test count(==(true), occursin.("version: '1.12'", eachline(IOBuffer(minimum_ci)))) == 1
+    @test count(==(true), occursin.("version: 'min'", eachline(IOBuffer(minimum_ci)))) == 1
     @test !occursin("matrix:", minimum_ci)
     @test !occursin("macOS-latest", minimum_ci)
     @test !occursin("windows-latest", minimum_ci)
@@ -518,26 +526,35 @@ end
     )
 end
 
-@testset "dedicated quality workflows" begin
+@testset "citation preserves author display names with YAML quoting" begin
+    authors = ["Alice \"A\" Smith", "山田 太郎", "Team: #1\nContributors"]
+    files = PkgFactory.Templates.generate_template_files_dict(
+        "example", "CitationPkg.jl", authors, "Citation tests", "all-in-one",
+    )
+    cff = files["CITATION.cff"]
+    names = [PkgFactory.Templates.JSON3.read(String(split(line, ": "; limit = 2)[2]), String)
+             for line in split(cff, '\n') if startswith(line, "  - family-names: ")]
+    @test names == authors
+    @test occursin("title: \"CitationPkg.jl\"", cff)
+    @test occursin("repository-code: \"https://github.com/example/CitationPkg.jl\"", cff)
+    @test !occursin("{{{", cff)
+end
+
+@testset "quality checks run through the package test suite" begin
     files = PkgFactory.Templates.generate_template_files_dict(
         "example", "QualityPkg.jl", ["Example Author"], "Quality workflow tests", "all-in-one",
     )
     for tool in ("Aqua", "JET")
         script = lowercase(tool) * ".jl"
-        workflow = files[".github/workflows/$(tool).yml"]
-        @test occursin("name: $tool", workflow)
-        @test occursin("branches: [main]", workflow)
-        @test occursin("pull_request:", workflow)
-        @test occursin("workflow_dispatch:", workflow)
-        @test occursin("version: '1'", workflow)
-        @test occursin("using Pkg; Pkg.instantiate()", workflow)
-        @test occursin("julia --project=test --startup-file=no --color=yes test/$script", workflow)
-        @test occursin(raw"group: ${{ github.workflow }}-${{ github.ref }}", workflow)
-        @test !occursin("continue-on-error", workflow)
+        @test !haskey(files, ".github/workflows/$(tool).yml")
         @test occursin("include(\"$script\")", files["test/runtests.jl"])
         @test occursin("using QualityPkg", files["test/$script"])
         @test !occursin("{{{", files["test/$script"])
+        @test !occursin("workflows/$(tool).yml", files["README.md"])
     end
+    @test occursin("include(\"explicit_imports.jl\")", files["test/runtests.jl"])
+    @test occursin("check_no_implicit_imports(QualityPkg)", files["test/explicit_imports.jl"])
+    @test occursin("check_no_stale_explicit_imports(QualityPkg)", files["test/explicit_imports.jl"])
     @test occursin("Aqua.test_all(QualityPkg)", files["test/aqua.jl"])
     @test occursin("JET.test_package(QualityPkg; target_modules = (QualityPkg,))", files["test/jet.jl"])
     for template in ("simple", "minimum")
