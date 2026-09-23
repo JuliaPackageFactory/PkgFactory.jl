@@ -2,6 +2,9 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it using this metadata."
 type: software
 title: "{{{PKG}}}.jl"
+# Author display names are preserved in family-names without guessing name parts.
+# Before release, split given-names and family-names where appropriate; citation
+# styles may otherwise treat the full display name as a surname.
 authors:
 {{{CFF_AUTHORS}}}
 version: "0.0.1"

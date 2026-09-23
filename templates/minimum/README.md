@@ -1,6 +1,5 @@
 # {{{PKG}}}.jl
 
-[![Julia compatibility](https://img.shields.io/badge/Julia-compat-blue?logo=julia)](Project.toml#compat)
 [![CI](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 {{{DESCR}}}

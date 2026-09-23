@@ -550,7 +550,9 @@ end
         @test occursin("include(\"$script\")", files["test/runtests.jl"])
         @test occursin("using QualityPkg", files["test/$script"])
         @test !occursin("{{{", files["test/$script"])
-        @test !occursin("workflows/$(tool).yml", files["README.md"])
+        for path in ("README.md", "docs/src/index.md")
+            @test !occursin("workflows/$(tool).yml", files[path])
+        end
     end
     @test occursin("include(\"explicit_imports.jl\")", files["test/runtests.jl"])
     @test occursin("check_no_implicit_imports(QualityPkg)", files["test/explicit_imports.jl"])
