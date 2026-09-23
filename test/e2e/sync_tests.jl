@@ -43,7 +43,7 @@ end
                 name = "Template$suffix"
                 package_uuid = snapshot_uuid(git, checkout, previous_name)
                 generate(pkg) = PkgFactory.Templates.generate_template_files_dict(
-                    "JuliaPackageFactory", "$pkg.jl", ["PkgFactory CI"], "E2E", template; package_uuid,
+                    "JuliaPackageFactory", "$pkg.jl", ["Shuhei Ohno"], "E2E", template; package_uuid,
                 )
                 @test publish_template_snapshot(git, checkout, generate(previous_name), "Before rename")
                 old_sha = snapshot_head(git, checkout)

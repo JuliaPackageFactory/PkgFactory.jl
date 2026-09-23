@@ -26,7 +26,7 @@ function main()
     template = templates[name]
     repo = "$name.jl"
     full_name = "$owner/$repo"
-    authors = ["PkgFactory CI"]
+    authors = ["Shuhei Ohno"]
     description = "Integration tests for the `$template` template of [PkgFactory.jl](https://github.com/JuliaPackageFactory/PkgFactory.jl)."
     gh = API.gh_executable()
     git = API.git_executable()
