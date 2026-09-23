@@ -5,6 +5,7 @@
 LocalPreferences.toml
 .DS_Store
 /docs/build/
+/docs/src/assets/citation.bib
 
 # Jupyter Notebook
 .ipynb_checkpoints/

@@ -124,14 +124,16 @@ sequenceDiagram
 All three templates use Julia 1.12+ workspaces and declare their sample API with
 `public`. The minimum template keeps a single CI job using the `min` selector;
 simple and all-in-one also test stable and prerelease Julia. All-in-one adds a
-Windows PR job and runs quality checks through the package test suite. Docs and
+Windows PR job and runs quality checks through the package test suite, with
+dedicated Aqua and JET workflows for their status badges. Docs and
 doctests run together, including for fork PRs; Documenter decides whether it can
 deploy. Local builds use `.html` links.
 
 All-in-one uses Dependabot for Julia and Actions dependencies. Do not add a
-second dependency-update bot for the same projects. TagBot reuses the
-`DOCUMENTER_KEY` secret for registered releases. Simple and minimum leave release
-and dependency-update automation to their maintainers.
+second dependency-update bot for the same projects. Simple and all-in-one use
+TagBot with the `DOCUMENTER_KEY` secret for registered releases. Simple leaves
+dependency-update automation to its maintainers; minimum also leaves release
+automation to its maintainers.
 
 Keep the presets small and usable without choosing organization policies. A code
 of conduct and security policy need real reporting contacts and maintainer

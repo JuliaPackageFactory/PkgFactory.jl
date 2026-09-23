@@ -1,6 +1,8 @@
 [deps]
 {{{PKG}}} = "{{{UUID}}}"
+Bibliography = "f1be7e48-bf82-45af-a471-ae754a193061"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 
 [compat]
+Bibliography = "0.4"
 Documenter = "1.9"

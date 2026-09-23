@@ -66,9 +66,10 @@ This is the typical workflow for making changes.
 This project follows [Semantic Versioning](https://semver.org/) and the [ColPrac version increment guidelines](https://github.com/SciML/ColPrac?tab=readme-ov-file#incrementing-the-package-version). When bumping the version, update:
 
 - the version in [Project.toml](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/blob/main/Project.toml)
-- the version in `CITATION.cff` and release notes in `CHANGELOG.md`
-- the version, year, and month in [CITATION.bib](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/blob/main/CITATION.bib)
+- release notes in `CHANGELOG.md`
+- `version` and `date-released` in [CITATION.cff](https://github.com/{{{OWNER}}}/{{{PKG}}}.jl/blob/main/CITATION.cff)
 
 Keep the version values synchronized, and set the citation date to the release date.
+The documentation build uses Bibliography.jl to generate the BibTeX citation from `CITATION.cff`.
 
 To register this package in the [General](https://github.com/JuliaRegistries/General) registry, install [Registrator](https://github.com/JuliaRegistries/Registrator.jl?tab=readme-ov-file#install-registrator) and use it via the [GitHub App](https://github.com/JuliaRegistries/Registrator.jl?tab=readme-ov-file#via-the-github-app).

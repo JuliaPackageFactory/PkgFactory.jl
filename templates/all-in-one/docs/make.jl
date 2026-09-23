@@ -1,6 +1,11 @@
 using {{{PKG}}}
 using Documenter
 
+include("citation.jl")
+citation_path = joinpath(@__DIR__, "src", "assets", "citation.bib")
+mkpath(dirname(citation_path))
+write(citation_path, citation_bibtex(joinpath(@__DIR__, "..", "CITATION.cff")))
+
 DocMeta.setdocmeta!({{{PKG}}}, :DocTestSetup, :(using {{{PKG}}}); recursive = true)
 
 makedocs(;

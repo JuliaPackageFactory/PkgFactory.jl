@@ -346,11 +346,11 @@ end
         @test occursin("julia-actions/setup-julia@v3", template[".github/workflows/CI.yml"])
         @test !occursin("julia-actions/setup-julia@v2", template[".github/workflows/CI.yml"])
         @test occursin("*.jl text eol=lf", template[".gitattributes"])
-        @test occursin("Pkg.test()", template["AGENTS.md"])
         @test occursin("## Quick Start", template["README.md"])
         @test !occursin("## Installation", template["README.md"])
     end
     for template in (all_in_one, simple)
+        @test occursin("Pkg.test()", template["AGENTS.md"])
         @test occursin("prettyurls = get(ENV, \"CI\", \"false\") == \"true\"", template["docs/make.jl"])
         @test occursin("checkdocs = :public", template["docs/make.jl"])
         @test !occursin("Run doctests", template[".github/workflows/CI.yml"])
@@ -358,7 +358,7 @@ end
         @test !occursin("## Installation", template["docs/src/index.md"])
     end
     @test occursin("version = \"0.0.1\"", all_in_one["Project.toml"])
-    @test occursin("version = {v0.0.1}", all_in_one["CITATION.bib"])
+    @test occursin("version: \"0.0.1\"", all_in_one["CITATION.cff"])
     project_uuid = only(match(r"uuid = \"([^\"]+)\"", all_in_one["Project.toml"]).captures)
     @test occursin("MyPkg = \"$(project_uuid)\"", all_in_one["docs/Project.toml"])
     @test occursin("MyPkg = \"$(project_uuid)\"", all_in_one["test/Project.toml"])
@@ -427,8 +427,8 @@ end
     @test !occursin("```@index", all_in_one["docs/src/index.md"])
     @test occursin("import MyPkg # hide", all_in_one["docs/src/index.md"])
     @test occursin("pkgdir(MyPkg)", all_in_one["docs/src/index.md"])
-    @test !occursin("../../CITATION.bib", all_in_one["docs/src/index.md"])
-    @test occursin(r"month\s+= \{[a-z]{3}\}", all_in_one["CITATION.bib"])
+    @test occursin("assets/citation.bib", all_in_one["docs/src/index.md"])
+    @test !haskey(all_in_one, "CITATION.bib")
     @test occursin("versioninfo()", all_in_one[".github/ISSUE_TEMPLATE/bug_report.yml"])
     @test occursin("required: true", all_in_one[".github/ISSUE_TEMPLATE/bug_report.yml"])
     @test !haskey(all_in_one, ".github/ISSUE_TEMPLATE/bug_report.md")
@@ -479,13 +479,13 @@ end
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         ".github/ISSUE_TEMPLATE/feature_request.yml",
         ".github/workflows/Format.yml",
-        ".github/workflows/TagBot.yml",
-        "CITATION.bib",
+        "CITATION.cff",
         "docs/src/developer.md",
         "docs/src/user.md",
     )
         @test !haskey(simple, path)
     end
+    @test haskey(simple, ".github/workflows/TagBot.yml")
     @test !any(
         occursin(dependency, content) for
             dependency in ("Aqua", "JET", "Runic") for
@@ -517,6 +517,7 @@ end
     @test occursin("Test =", minimum["test/Project.toml"])
     @test !any(startswith(path, "docs/") for path in keys(minimum))
     @test !haskey(minimum, "CITATION.bib")
+    @test !haskey(minimum, "CITATION.cff")
     @test !occursin("CITATION", minimum["README.md"])
     @test !occursin("Documentation", minimum["README.md"])
     @test !any(
@@ -526,32 +527,27 @@ end
     )
 end
 
-@testset "citation preserves author display names with YAML quoting" begin
-    authors = ["Alice \"A\" Smith", "山田 太郎", "Team: #1\nContributors"]
-    files = PkgFactory.Templates.generate_template_files_dict(
-        "example", "CitationPkg.jl", authors, "Citation tests", "all-in-one",
-    )
-    cff = files["CITATION.cff"]
-    names = [PkgFactory.Templates.JSON3.read(String(split(line, ": "; limit = 2)[2]), String)
-             for line in split(cff, '\n') if startswith(line, "  - family-names: ")]
-    @test names == authors
-    @test occursin("title: \"CitationPkg.jl\"", cff)
-    @test occursin("repository-code: \"https://github.com/example/CitationPkg.jl\"", cff)
-    @test !occursin("{{{", cff)
-end
-
-@testset "quality checks run through the package test suite" begin
+@testset "quality workflows and package test suite" begin
     files = PkgFactory.Templates.generate_template_files_dict(
         "example", "QualityPkg.jl", ["Example Author"], "Quality workflow tests", "all-in-one",
     )
     for tool in ("Aqua", "JET")
         script = lowercase(tool) * ".jl"
-        @test !haskey(files, ".github/workflows/$(tool).yml")
+        workflow = files[".github/workflows/$(tool).yml"]
+        @test occursin("name: $tool", workflow)
+        @test occursin("branches: [main]", workflow)
+        @test occursin("pull_request:", workflow)
+        @test occursin("workflow_dispatch:", workflow)
+        @test occursin("version: '1'", workflow)
+        @test occursin("using Pkg; Pkg.instantiate()", workflow)
+        @test occursin("julia --project=test --startup-file=no --color=yes test/$script", workflow)
+        @test occursin(raw"group: ${{ github.workflow }}-${{ github.ref }}", workflow)
+        @test !occursin("continue-on-error", workflow)
         @test occursin("include(\"$script\")", files["test/runtests.jl"])
         @test occursin("using QualityPkg", files["test/$script"])
         @test !occursin("{{{", files["test/$script"])
         for path in ("README.md", "docs/src/index.md")
-            @test !occursin("workflows/$(tool).yml", files[path])
+            @test occursin("workflows/$(tool).yml", files[path])
         end
     end
     @test occursin("include(\"explicit_imports.jl\")", files["test/runtests.jl"])
@@ -1526,3 +1522,4 @@ include("web_hardening.jl")
 
 # These tests use only temporary local Git repositories, never GitHub.
 include("e2e/sync_tests.jl")
+include("citation.jl")
