@@ -1,0 +1,4 @@
+/* Show only the repository icon in the top navigation bar. */
+#documenter .docs-main header.docs-navbar .docs-right .docs-navbar-link .docs-label {
+    display: none;
+}

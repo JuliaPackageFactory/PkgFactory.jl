@@ -11,7 +11,7 @@ makedocs(;
     format=Documenter.HTML(;
         canonical="https://juliapackagefactory.github.io/PkgFactory.jl",
         edit_link="main",
-        assets=["assets/logo.ico"],
+        assets=["assets/logo.ico", "assets/custom.css"],
     ),
     pages=[
         "Home" => "index.md",
