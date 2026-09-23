@@ -10,6 +10,7 @@ import PkgTemplates
 import Mustache
 import UUIDs
 import Dates
+import JSON3
 
 function hello()
     return "Hello, Templates.jl"
@@ -130,6 +131,9 @@ function generate_template_files_dict(
         "DESCR" => package_description,
         "UUID" => isnothing(package_uuid) ? string(UUIDs.uuid4()) : package_uuid,
         "AUTHORS" => author_names,
+        # JSON string quoting is also valid YAML, including quotes and newlines.
+        # Preserve full display names rather than guessing given/family names.
+        "CFF_AUTHORS" => join(["  - family-names: " * JSON3.write(name) for name in author_names], "\n"),
         "LICENSOR" => join(author_names, ", "),
         "URL" => "https://github.com/$(owner_name)/$(repo_name)",
         "VERSION" => "v0.0.1",

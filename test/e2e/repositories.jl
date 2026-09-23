@@ -56,6 +56,8 @@ function main()
     new_sha = snapshot_head(git, destination)
 
     @testset "$full_name" begin
+        tracked = split(read(`$git -C $destination ls-files -z`, String), '\0'; keepempty = false)
+        @test Set(tracked) == Set(keys(expected))
         @test snapshot_uuid(git, destination, name) == package_uuid
         remote_ref = split(read(`$git -C $destination ls-remote origin refs/heads/main`, String))
         @test first(remote_ref) == new_sha

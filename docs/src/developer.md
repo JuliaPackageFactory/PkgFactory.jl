@@ -73,9 +73,11 @@ or configure deploy keys or secrets.
 
 The E2E script renders the templates, commits changed files, checks that the
 remote received the commit, and runs each generated package's tests. Commits
-record the source PkgFactory SHA; the job summary links to the changes. Files
-outside the current template are retained, including files removed from a newer
-template. Identical output creates no commit. Concurrent remote edits cause the
+record the source PkgFactory SHA; the job summary links to the changes. These
+dedicated repositories are complete generated snapshots: tracked files absent
+from the current template are removed, including old package names and deleted
+workflows. Do not maintain custom files in these repositories. The package UUID
+and Git history are preserved. Identical output creates no commit. Concurrent remote edits cause the
 push to fail without rewriting history.
 
 The workflow is separate from normal CI and only publishes from `main`. It does
@@ -116,3 +118,33 @@ sequenceDiagram
   UI->>App: call API (Oxygen.jl)
   App->>GitHub: create_repo, etc.
 ```
+
+## Template design choices
+
+All three templates use Julia 1.12+ workspaces and declare their sample API with
+`public`. The minimum template keeps a single CI job using the `min` selector;
+simple and all-in-one also test stable and prerelease Julia. All-in-one adds a
+Windows PR job and runs quality checks through the package test suite. Docs and
+doctests run together, including for fork PRs; Documenter decides whether it can
+deploy. Local builds use `.html` links.
+
+All-in-one uses Dependabot for Julia and Actions dependencies. Do not add a
+second dependency-update bot for the same projects. TagBot reuses the
+`DOCUMENTER_KEY` secret for registered releases. Simple and minimum leave release
+and dependency-update automation to their maintainers.
+
+Keep the presets small and usable without choosing organization policies. A code
+of conduct and security policy need real reporting contacts and maintainer
+commitments; generated placeholders would misrepresent those commitments. Logos
+and favicons should belong to the new package. External-link checks, dependency
+lower-bound checks, invalidation monitoring, precompilation workloads, and an
+alternative test runner can be added when the package has code that benefits
+from them. The greeting example does not justify enabling those extra jobs or
+dependencies by default.
+
+The `.gitignore` differences are intentional: only documentation templates need
+`docs/build/`, and only all-in-one includes notebooks. Shared line-ending and
+editor settings are consistent across presets. A base/overlay system, selectable
+features, alternate Julia compatibility layouts, and an update-answers format
+need a separate design with a supported update/migration contract. The existing
+`.pkgfactory.json` is a repository-creation recovery marker, not an update file.

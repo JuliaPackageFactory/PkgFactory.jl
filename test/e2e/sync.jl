@@ -20,6 +20,11 @@ end
 function publish_template_snapshot(git, directory, files, message)
     isempty(strip(read(`$git -C $directory status --porcelain`, String))) ||
         error("Refusing to publish from a dirty E2E checkout.")
+    # These dedicated repositories are complete generated snapshots. Remove
+    # tracked files absent from the new template, including old package names.
+    tracked = split(read(`$git -C $directory ls-files -z`, String), '\0'; keepempty = false)
+    stale = sort!(collect(setdiff(tracked, keys(files))))
+    isempty(stale) || run(`$git -C $directory rm -- $stale`)
     for (path, content) in files
         target = joinpath(directory, split(path, '/')...)
         mkpath(dirname(target))

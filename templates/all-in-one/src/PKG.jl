@@ -1,5 +1,8 @@
 module {{{PKG}}}
 
+# Public API, accessed as {{{PKG}}}.hello without exporting the name.
+public hello
+
 # Packages
 
 import DocStringExtensions
