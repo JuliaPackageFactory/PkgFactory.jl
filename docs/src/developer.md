@@ -53,11 +53,9 @@ site to `gh-pages`. It does not use `DOCUMENTER_KEY`, because deploy keys are
 disabled for this repository. Keep GitHub Pages configured to deploy from
 `gh-pages` at `/ (root)`.
 
-Pushes authenticated with `GITHUB_TOKEN` do not automatically start a Pages
-build, so the job explicitly requests one through the GitHub API after a
-successful deployment and doctests. This requires `contents: write` and
-`pages: write`. Pull requests build and test the docs without requesting a
-Pages build.
+The `gh-pages` update starts the repository's Pages deployment. Do not also
+request a build through the Pages API: that creates a second deployment for
+the same commit. Pull requests build and test the docs without publishing.
 
 ## Template repository tests
 
