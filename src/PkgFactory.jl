@@ -2,6 +2,7 @@
 module PkgFactory
 
 import Base64, Dates, DocStringExtensions, HTTP, JSON3, SHA, Sodium, URIs, UUIDs
+import OpenSSH_jll: ssh_keygen
 
 export PackageSpec, PackagePlan, Credential, plan_package, create_package,
     package_spec, package_schema, list_templates, repository_status,

@@ -268,6 +268,12 @@ deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
 version = "0.3.29+0"
 
+[[deps.OpenSSH_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "OpenSSL_jll", "Zlib_jll"]
+git-tree-sha1 = "2da18ab26a6eb38b374c16b157d5a4cc3ab74e02"
+uuid = "9bd350c2-7e96-507f-8002-3f2e150b4e1b"
+version = "10.5.1+0"
+
 [[deps.OpenSSL]]
 deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "NetworkOptions", "OpenSSL_jll", "Sockets"]
 git-tree-sha1 = "1d1aaa7d449b58415f97d2839c318b70ffb525a0"
@@ -306,7 +312,7 @@ weakdeps = ["REPL"]
     REPLExt = "REPL"
 
 [[deps.PkgFactory]]
-deps = ["Base64", "Dates", "DocStringExtensions", "HTTP", "JSON3", "Mustache", "PkgTemplates", "SHA", "Sodium", "URIs", "UUIDs"]
+deps = ["Base64", "Dates", "DocStringExtensions", "HTTP", "JSON3", "Mustache", "OpenSSH_jll", "PkgTemplates", "SHA", "Sodium", "URIs", "UUIDs"]
 path = "../.."
 uuid = "f5938637-db80-4a7e-b041-f9483a1b56a7"
 version = "0.0.5"

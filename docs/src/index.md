@@ -12,8 +12,9 @@ coverage available in the `simple` and `all-in-one` templates.
 
 ## Quick Start
 
-You need Julia 1.12 or later, Git, and a GitHub account. For templates with
-documentation, OpenSSH's `ssh-keygen` must be on your PATH.
+You need Julia 1.12 or later, Git, and a GitHub account. Documentation deploy keys
+use the automatically installed `OpenSSH_jll` dependency. No separate OpenSSH
+installation or PATH configuration is needed in any application.
 
 In a terminal, download PkgFactory and start the browser interface:
 

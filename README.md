@@ -13,8 +13,10 @@ checks and maintenance tools.
 
 ## Quick Start
 
-Install Julia 1.12 or later and Git. The default template also needs OpenSSH's
-`ssh-keygen` on your PATH to create a documentation deploy key.
+Install Julia 1.12 or later and Git. Documentation deploy keys are generated
+using OpenSSH bundled by Julia's `OpenSSH_jll` dependency, installed automatically
+with PkgFactory. No separate OpenSSH installation or PATH configuration is needed
+for the core, CLI, Web UI, or MCP server.
 
 Run these commands in a terminal:
 

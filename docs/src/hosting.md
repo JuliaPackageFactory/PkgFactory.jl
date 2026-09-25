@@ -14,7 +14,8 @@ self-contained under `apps/web/public/`.
 
 ## One server behind HTTPS
 
-Install Julia and OpenSSH (`ssh-keygen`, for documentation deploy keys).
+Install Julia 1.12 or later. Instantiating the Web UI also installs `OpenSSH_jll`
+for documentation deploy keys; no system OpenSSH or PATH configuration is needed.
 Run one Julia process behind an HTTPS reverse proxy. Keep the Julia port private.
 Set `PUBLIC_ORIGIN` to the exact browser origin (scheme and host, with a port if
 nonstandard), and use a dedicated GitHub OAuth application's client ID with

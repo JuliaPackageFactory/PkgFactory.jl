@@ -29,9 +29,13 @@ end
 function _generate_keys()
     return mktempdir() do directory
         filename = joinpath(directory, "documenter")
-        # No process-global cd and no shared relative filenames.
-        run(pipeline(`ssh-keygen -q -t rsa -b 4096 -N "" -C Documenter -f $filename`;
-            stdout=devnull, stderr=devnull))
+        # DocumenterTools.genkeys prints the private key and changes the process
+        # working directory. Use its bundled executable directly so keys stay
+        # private and concurrent calls use independent absolute filenames.
+        command = `$(ssh_keygen()) -q -t rsa -b 4096 -N "" -C Documenter -f $filename`
+        # A ProcessFailedException would display the JLL command's environment.
+        success(pipeline(command; stdout=devnull, stderr=devnull)) ||
+            error("Failed to generate the documentation deploy key.")
         (chomp(read(filename * ".pub", String)), Base64.base64encode(read(filename)))
     end
 end

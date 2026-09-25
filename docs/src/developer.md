@@ -33,6 +33,16 @@ workspace containing its own `test` project and a committed Manifest. Applicatio
 resolve the local core through `[sources]` with a relative `../..` path; they
 are not members of the root workspace.
 
+Documentation deploy keys use the core's direct `OpenSSH_jll` dependency; all
+applications receive the bundled executable through PkgFactory. Installing system
+OpenSSH or adding `ssh-keygen` to PATH is unnecessary.
+[`DocumenterTools.genkeys`](https://github.com/JuliaDocs/DocumenterTools.jl/blob/v0.1.21/src/genkeys.jl)
+is an interactive API that prints the private key and changes the process working
+directory. PkgFactory instead calls the same `OpenSSH_jll.ssh_keygen()` executable
+with an absolute filename in a fresh temporary directory for each call. It returns
+the public key and Base64-encoded private key without logging either, and removes
+temporary files when the call finishes or fails.
+
 ## Local development and tests
 
 Install dependencies and test the core:
@@ -53,6 +63,10 @@ Default tests use simulated GitHub responses and local transports. They do not
 create GitHub repositories. Run browser input tests with
 `node apps/web/test/browser.cjs`. The separate
 [template repository tests](developer/template-tests.md) publish to GitHub.
+
+The core tests also generate real RSA-4096 key pairs concurrently in a child Julia
+process with an empty PATH. They verify matching public/private keys, silent
+output and logging, unchanged working directory, and temporary-file cleanup.
 
 To open a development REPL:
 

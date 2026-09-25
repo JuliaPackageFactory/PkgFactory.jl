@@ -33,30 +33,18 @@ end
     @test WA._with_repository_lock(() -> :released, "ohno", "MyPackage.jl") == :released
 end
 
-@testset "Concurrent real key generation preserves working directory" begin
-    original = pwd()
-    first_task = @async WA._generate_keys()
-    second_task = @async WA._generate_keys()
-    a, b = fetch(first_task), fetch(second_task)
-    @test pwd() == original
-    @test a[1] != b[1]
-    @test all(pair -> startswith(pair[1], "ssh-rsa "), [a, b])
-    @test all(pair -> occursin("PRIVATE KEY", String(WA.Base64.base64decode(pair[2]))), [a, b])
-    @test !isfile("github-private-key")
-    for pair in [a, b]
-        mktempdir() do directory
-            file = joinpath(directory, "key")
-            write(file, WA.Base64.base64decode(pair[2]))
-            if Sys.iswindows()
-                owner = strip(read(`whoami`, String))
-                grant = owner * ":(F)"
-                run(pipeline(`icacls $file /inheritance:r /grant:r $grant`; stdout=devnull))
-            else
-                chmod(file, 0o600)
-            end
-            derived = read(`ssh-keygen -y -f $file`, String)
-            @test split(derived)[2] == split(pair[1])[2]
-        end
+@testset "Real keys without system OpenSSH" begin
+    # Isolate PATH changes from the test runner and any other Julia tasks.
+    mktempdir() do directory
+        empty_path = mkdir(joinpath(directory, "empty path"))
+        key_temp = mkdir(joinpath(directory, "keys with spaces"))
+        script = joinpath(@__DIR__, "key_generation.jl")
+        project = dirname(Base.active_project())
+        command = `$(Base.julia_cmd()) --startup-file=no --project=$project $script`
+        run(addenv(command, "PATH" => empty_path,
+            "TMPDIR" => key_temp, "TMP" => key_temp, "TEMP" => key_temp))
+        @test isempty(readdir(key_temp))
+        @test isempty(readdir(empty_path))
     end
 end
 
