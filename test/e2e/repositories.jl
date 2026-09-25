@@ -4,7 +4,6 @@ using Test
 
 include("sync.jl")
 
-const API = PkgFactory.LocalAPI
 
 function required_env(name)
     value = String(strip(get(ENV, name, "")))
@@ -29,13 +28,15 @@ function main()
     authors = ["Shuhei Ohno"]
     citation_authors = [(family_names = "Ohno", given_names = "Shuhei")]
     description = "Integration tests for the `$template` template of [PkgFactory.jl](https://github.com/JuliaPackageFactory/PkgFactory.jl)."
-    gh = API.gh_executable()
-    git = API.git_executable()
+    gh = `gh`
+    git = `git`
     source_sha = required_env("GITHUB_SHA")
     occursin(r"^[0-9a-f]{40}$", source_sha) || error("Invalid source commit SHA")
 
-    API.check_repo(owner, repo) || error("Create $full_name before running E2E.")
-    user = API.get_authenticated_user()
+    PkgFactory.repository_availability(ENV["GH_TOKEN"], owner, repo)["available"] &&
+        error("Create $full_name before running E2E.")
+    user = PkgFactory.JSON3.read(read(`$gh api user`, String))
+    email = "$(user.id)+$(user.login)@users.noreply.github.com"
     run(`$gh auth setup-git`)
 
     # Keep this checkout for the next workflow step, which runs without the PAT.
@@ -52,7 +53,7 @@ function main()
         owner, repo, authors, description, template; package_uuid, citation_authors,
     )
     run(`$git -C $destination config user.name $(user.login)`)
-    run(`$git -C $destination config user.email $(user.email)`)
+    run(`$git -C $destination config user.email $email`)
     publish_template_snapshot(git, destination, expected, "Update $name from PkgFactory $source_sha")
     new_sha = snapshot_head(git, destination)
 

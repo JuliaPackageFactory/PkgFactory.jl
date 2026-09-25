@@ -72,7 +72,6 @@ text = PkgFactory.Templates.read_file(path_file)
 function read_file(path::String)::String
     try
         text = Base.read(path, String)
-        @info "Success to read file: $(path)"
         return text
     catch e
         @error "Failed to read file: $(path)" exception = (e, catch_backtrace())

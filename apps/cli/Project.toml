@@ -1,0 +1,19 @@
+name = "PkgFactoryCLI"
+uuid = "4622449e-6d38-414b-9b54-b884b4587e70"
+version = "0.1.0"
+
+[deps]
+PkgFactory = "f5938637-db80-4a7e-b041-f9483a1b56a7"
+
+[sources]
+PkgFactory = {path = "../.."}
+
+[compat]
+PkgFactory = "0.0.5"
+julia = "1.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: pkgfactory-mcp
+    runtime: docker
+    dockerfilePath: ./apps/mcp/Dockerfile
+    dockerContext: .
+    plan: standard
+    dockerCommand: julia --project=/app/apps/mcp --startup-file=no /app/apps/mcp/bin/auth0-server.jl
+    numInstances: 1
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: AUTH0_ISSUER
+        sync: false
+      - key: MCP_RESOURCE_URL
+        sync: false
+      - key: MCP_OPERATOR_SUBJECT
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false

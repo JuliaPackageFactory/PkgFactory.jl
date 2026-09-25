@@ -1,46 +1,3 @@
-# Included inside WebAPI. No credentials are retained in shared state.
-struct InputError <: Exception
-    message::String
-end
-Base.showerror(io::IO, err::InputError) = print(io, err.message)
-
-struct CreationError <: Exception
-    stage::String
-    status::Int
-end
-Base.showerror(io::IO, err::CreationError) = print(io,
-    "Package creation stopped at ", err.stage,
-    ". GitHub may have changed; check repository status before resuming.")
-
-"""Bounded GitHub transport. Writes are never automatically retried or redirected."""
-struct GitHubTransport{F}
-    request::F
-    connect_timeout::Int
-    read_timeout::Int
-end
-function GitHubTransport(; request=HTTP.request, connect_timeout=10, read_timeout=30)
-    connect_timeout > 0 && read_timeout > 0 || throw(ArgumentError("Timeouts must be positive"))
-    GitHubTransport(request, Int(connect_timeout), Int(read_timeout))
-end
-function (transport::GitHubTransport)(method, url; kwargs...)
-    transport.request(method, url; connect_timeout=transport.connect_timeout,
-        readtimeout=transport.read_timeout, retry=false, redirect=false, kwargs...)
-end
-
-function _bounded_text(value, field, limit; empty=false)
-    value isa AbstractString || throw(InputError("$field must be a string."))
-    (empty || !isempty(strip(value))) && ncodeunits(value) <= limit ||
-        throw(InputError("$field has an invalid length."))
-    return String(value)
-end
-
-function _validate_owner(owner)
-    _bounded_text(owner, "owner", 100)
-    # Validate URL path components without imposing rules on GitHub account types.
-    occursin(r"^[A-Za-z0-9][A-Za-z0-9-]*$", owner) ||
-        throw(InputError("owner must contain only ASCII letters, digits and hyphens."))
-end
-
 const ACTIVE_REPOSITORIES = Set{String}()
 const REPOSITORY_MUTEX = ReentrantLock()
 function _with_repository_lock(f, owner, repo)
@@ -78,7 +35,6 @@ function _marker(token, owner, repo; requester=GitHubTransport())
     return (data=data, sha=String(file["sha"]))
 end
 
-"""Inspect GitHub recovery state without modifying the repository or storing a token."""
 function repository_status(token::AbstractString, owner::String, repo::String; requester=GitHubTransport())
     _validate_owner(owner)
     _bounded_text(repo, "package_name", 100)

@@ -1,0 +1,11 @@
+[deps]
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+ModelContextProtocol = "c58f755f-f2a7-4f48-bf29-4e9659b78499"
+PkgFactory = "f5938637-db80-4a7e-b041-f9483a1b56a7"
+Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
+PkgFactoryMCP = "f82bd02c-d870-4408-a1ff-02f18d06f713"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Test = "1"

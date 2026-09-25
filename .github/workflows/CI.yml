@@ -23,7 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         version:
+          - '1.10'
           - '1.11'
+          - '1.12'
         os:
           - ubuntu-latest
         arch:
@@ -43,6 +45,27 @@ jobs:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+  applications:
+    name: Application - ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [cli, web, mcp]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v3
+      - name: Instantiate application
+        run: julia --project=apps/${{ matrix.app }} --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+      - name: Test application
+        run: julia --project=apps/${{ matrix.app }} --startup-file=no -e 'import Pkg; Pkg.test()'
+      - name: Test browser input translation
+        if: matrix.app == 'web'
+        run: node apps/web/test/browser.cjs
   docs:
     name: Documentation
     runs-on: ubuntu-latest

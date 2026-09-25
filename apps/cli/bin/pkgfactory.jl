@@ -1,0 +1,2 @@
+using PkgFactoryCLI
+PkgFactoryCLI.main()

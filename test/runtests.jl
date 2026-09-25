@@ -1,253 +1,6 @@
 using PkgFactory
 using Test
-
-mutable struct FakeCommandRunner
-    commands::Vector{String}
-    environments::Vector{Dict{String,String}}
-    inputs::Vector{Union{Nothing,String}}
-    authenticated::Bool
-    repository_exists::Bool
-    registered_package_names::Vector{String}
-    project_file::Union{Nothing,String}
-    main_branch_exists::Bool
-    gh_pages_exists::Bool
-    deploy_key_exists::Bool
-    documenter_secret_exists::Bool
-end
-
-mutable struct FakePackageCreator
-    calls::Vector{Any}
-    result::Bool
-end
-
-function (creator::FakePackageCreator)(args...; kwargs...)
-    push!(creator.calls, (args = args, options = (; kwargs...)))
-    return creator.result
-end
-
-function FakeCommandRunner(;
-    authenticated::Bool = true,
-    repository_exists::Bool = false,
-    registered_package_names::Vector{String} = String[],
-    project_file::Union{Nothing,String} = nothing,
-    main_branch_exists::Union{Nothing,Bool} = nothing,
-    gh_pages_exists::Bool = false,
-    deploy_key_exists::Bool = false,
-    documenter_secret_exists::Bool = false,
-)
-    return FakeCommandRunner(
-        String[],
-        Dict{String,String}[],
-        Union{Nothing,String}[],
-        authenticated,
-        repository_exists,
-        registered_package_names,
-        project_file,
-        isnothing(main_branch_exists) ? repository_exists : main_branch_exists,
-        gh_pages_exists,
-        deploy_key_exists,
-        documenter_secret_exists,
-    )
-end
-
-function (runner::FakeCommandRunner)(
-    cmd::Cmd;
-    env::Dict{String,String} = Dict{String,String}(),
-    input::Union{Nothing,String} = nothing,
-)
-    command = string(cmd)
-    push!(runner.commands, command)
-    push!(runner.environments, env)
-    push!(runner.inputs, input)
-
-    if occursin("auth status", command)
-        return runner.authenticated, "", runner.authenticated ? "" : "not authenticated"
-    elseif occursin("api graphql", command)
-        return true,
-        """[{"data":{"viewer":{"login":"ohno","name":"Shuhei OHNO","organizations":{"nodes":[{"login":"AllowedOrg","name":"Allowed Org","viewerCanCreateRepositories":true},{"login":"DeniedOrg","name":"Denied Org","viewerCanCreateRepositories":false}]}}}}]""",
-        ""
-    elseif occursin("api user", command)
-        return true, """{"login":"ohno","name":"Shuhei OHNO","id":59360244}""", ""
-    elseif occursin("repo list", command)
-        return true, "MyPkg.jl\nMyPkg1.jl\nMyPkg2.jl\n", ""
-    elseif occursin("repos/JuliaRegistries/General/git/trees/", command)
-        return true, join(runner.registered_package_names, '\n'), ""
-    elseif occursin("contents/Project.toml", command)
-        if isnothing(runner.project_file)
-            return false, "", "HTTP 404: Not Found"
-        end
-        return true, PkgFactory.LocalAPI.Base64.base64encode(runner.project_file), ""
-    elseif occursin("git/ref/heads/gh-pages", command)
-        return runner.gh_pages_exists,
-        "",
-        runner.gh_pages_exists ? "" : "HTTP 404: Not Found"
-    elseif occursin("git/ref/heads/main", command)
-        if occursin("--silent", command)
-            return runner.main_branch_exists,
-            "",
-            runner.main_branch_exists ? "" : "HTTP 404: Not Found"
-        end
-        return true, "abc123\n", ""
-    elseif occursin("api repos/", command) && occursin("--silent", command)
-        return runner.repository_exists,
-        "",
-        runner.repository_exists ? "" : "HTTP 404: Not Found"
-    elseif occursin("secret list", command)
-        secrets = runner.documenter_secret_exists ? "DOCUMENTER_KEY\n" : ""
-        return true, secrets, ""
-    elseif occursin("/keys --paginate", command)
-        keys = runner.deploy_key_exists ? "Documenter\n" : ""
-        return true, keys, ""
-    end
-
-    return true, "", ""
-end
-
-@testset "hello" begin
-    @test occursin("Hello", PkgFactory.hello())
-    @test occursin("Hello", PkgFactory.Verifications.hello())
-    @test occursin("Hello", PkgFactory.Templates.hello())
-    @test occursin("Hello", PkgFactory.LocalAPI.hello())
-    @test occursin("Hello", PkgFactory.LocalUI.hello())
-    @test occursin("Hello", PkgFactory.WebAPI.hello())
-    @test occursin("Hello", PkgFactory.WebUI.hello())
-end
-
-@testset "notebook package workflow" begin
-    config = PkgFactory.PackageConfig(
-        owner = " ohno ",
-        name = "MyPackage.jl",
-        authors = [" Alice Smith "],
-        description = " A package created from Jupyter ",
-        template = "minimum",
-    )
-    @test config.owner == "ohno"
-    @test config.name == "MyPackage"
-    @test config.authors == ["Alice Smith"]
-    @test config.description == "A package created from Jupyter"
-
-    plan = PkgFactory.preview(config)
-    @test plan.repository == "ohno/MyPackage.jl"
-    @test "src/MyPackage.jl" in plan.files
-    @test !any(occursin("PKG.jl"), plan.files)
-    preview_text = sprint(show, MIME"text/plain"(), plan)
-    @test occursin("https://github.com/ohno/MyPackage.jl", preview_text)
-    @test occursin("No changes have been made", preview_text)
-
-    @test_throws PkgFactory.WebAPI.InputError PkgFactory.preview(PkgFactory.PackageConfig(
-        owner = "ohno",
-        name = "lowercase",
-        authors = ["Alice Smith"],
-        description = "Invalid package",
-    ))
-    @test_throws ErrorException PkgFactory.preview(PkgFactory.PackageConfig(
-        owner = "ohno",
-        name = "MyPackage",
-        authors = ["Alice Smith"],
-        description = "",
-    ))
-
-    backend = PkgFactory.GitHubAPI("notebook-secret-token")
-    @test !occursin("notebook-secret-token", sprint(show, backend))
-    @test occursin("redacted", sprint(show, backend))
-    withenv("GITHUB_TOKEN" => "environment-token", "GH_TOKEN" => nothing) do
-        @test PkgFactory.GitHubAPI().access_token == "environment-token"
-    end
-
-    creation_call = Ref{Any}()
-    creator = function (args...; kwargs...)
-        creation_call[] = (; args, options = (; kwargs...))
-        return Dict(
-            "repository" => "ohno/MyPackage.jl",
-            "url" => "https://github.com/ohno/MyPackage.jl",
-            "resumed" => false,
-        )
-    end
-    result = PkgFactory.create!(
-        plan;
-        backend = backend,
-        package_creator = creator,
-    )
-    @test result["repository"] == "ohno/MyPackage.jl"
-    @test creation_call[].args[1] == "notebook-secret-token"
-    @test creation_call[].args[2:6] == (
-        "ohno",
-        "MyPackage",
-        ["Alice Smith"],
-        "A package created from Jupyter",
-        "",
-    )
-    @test creation_call[].options.template_name == "minimum"
-    @test !creation_call[].options.resume
-    direct_result = PkgFactory.create!(
-        config;
-        backend = backend,
-        package_creator = creator,
-    )
-    @test direct_result["repository"] == "ohno/MyPackage.jl"
-end
-
-@testset "notebook GitHub device login" begin
-    polls = Ref(0)
-    requester = function (method, url; headers, body, status_exception)
-        response = if endswith(url, "/device/code")
-            Dict(
-                "device_code" => "device-code",
-                "user_code" => "ABCD-1234",
-                "verification_uri" => "https://github.com/login/device",
-                "expires_in" => 900,
-                "interval" => 1,
-            )
-        else
-            polls[] += 1
-            polls[] == 1 ? Dict("error" => "authorization_pending") : Dict(
-                "access_token" => "oauth-secret-token",
-                "token_type" => "bearer",
-                "scope" => "read:user,repo,workflow",
-            )
-        end
-        return PkgFactory.WebAPI.HTTP.Response(
-            200,
-            PkgFactory.WebAPI.JSON3.write(response),
-        )
-    end
-    delays = Int[]
-    output = IOBuffer()
-    backend = PkgFactory.github_device_login(
-        requester = requester,
-        sleeper = delay -> push!(delays, delay),
-        output = output,
-    )
-    login_text = String(take!(output))
-    @test backend isa PkgFactory.GitHubAPI
-    @test backend.access_token == "oauth-secret-token"
-    @test delays == [5, 5]
-    @test occursin("ABCD-1234", login_text)
-    @test occursin("authorization completed", login_text)
-    @test !occursin("oauth-secret-token", login_text)
-
-    missing_scope_requester = function (method, url; headers, body, status_exception)
-        response = endswith(url, "/device/code") ? Dict(
-            "device_code" => "device-code",
-            "user_code" => "ABCD-1234",
-            "verification_uri" => "https://github.com/login/device",
-            "expires_in" => 900,
-            "interval" => 5,
-        ) : Dict(
-            "access_token" => "oauth-secret-token",
-            "scope" => "read:user,repo",
-        )
-        return PkgFactory.WebAPI.HTTP.Response(
-            200,
-            PkgFactory.WebAPI.JSON3.write(response),
-        )
-    end
-    @test_throws ErrorException PkgFactory.github_device_login(
-        requester = missing_scope_requester,
-        sleeper = _ -> nothing,
-        output = IOBuffer(),
-    )
-end
+import Git
 
 @testset "verify_owner_name" begin
     @test "OK" == PkgFactory.Verifications.verify_owner_name("ohno")
@@ -573,9 +326,9 @@ end
         owner = "example-owner", name = "NotebookPkg.jl",
         authors = ["Example Author"], description = "Notebook tests", template = "all-in-one",
     ))
-    @test plan.files == sort([collect(keys(files)); PkgFactory.WebAPI.MARKER_PATH])
+    @test plan.files == sort([collect(keys(files)); PkgFactory.MARKER_PATH])
     @test filter(key -> endswith(key, ".ipynb"), plan.files) == [path]
-    notebook = PkgFactory.WebAPI.JSON3.read(files[path], Dict{String,Any})
+    notebook = PkgFactory.JSON3.read(files[path], Dict{String,Any})
     @test notebook["nbformat"] == 4
     @test notebook["nbformat_minor"] == 5
     @test notebook["metadata"]["kernelspec"]["name"] == "julia"
@@ -627,526 +380,6 @@ end
     end
 end
 
-@testset "local API input normalization" begin
-    @test "MyPkg.jl" == PkgFactory.LocalAPI._normalize_repo_name("MyPkg")
-    @test "MyPkg.jl" == PkgFactory.LocalAPI._normalize_repo_name("MyPkg.jl")
-    @test "MyPkg" == PkgFactory.LocalAPI._get_package_name("MyPkg.jl")
-    @test occursin("MyPkg.jl", PkgFactory.LocalAPI.get_codecov_url("ohno", "MyPkg"))
-end
-
-@testset "local API authentication" begin
-    runner = FakeCommandRunner()
-    @test PkgFactory.LocalAPI.check_status_code(; command_runner = runner)
-
-    runner = FakeCommandRunner(; authenticated = false)
-    @test !PkgFactory.LocalAPI.check_status_code(; command_runner = runner)
-end
-
-@testset "GitHub account information" begin
-    runner = FakeCommandRunner()
-    user = PkgFactory.LocalAPI.get_authenticated_user(; command_runner = runner)
-    @test user.login == "ohno"
-    @test user.email == "59360244+ohno@users.noreply.github.com"
-
-    owners = PkgFactory.LocalAPI.get_repository_owners(; command_runner = runner)
-    @test getproperty.(owners, :login) == ["ohno", "AllowedOrg"]
-    @test getproperty.(owners, :kind) == [:user, :organization]
-    @test !any(owner.login == "DeniedOrg" for owner in owners)
-
-    repository_names =
-        PkgFactory.LocalAPI.get_repository_names("ohno"; command_runner = runner)
-    @test repository_names == ["MyPkg.jl", "MyPkg1.jl", "MyPkg2.jl"]
-
-    runner = FakeCommandRunner(; registered_package_names = ["MyPkg", "MyPkgTools"])
-    package_names = PkgFactory.LocalAPI.get_registered_package_names(
-        "MyPkg";
-        command_runner = runner,
-    )
-    @test package_names == ["MyPkg", "MyPkgTools"]
-    @test any(
-        occursin("repos/JuliaRegistries/General/git/trees/master:M", command) for
-        command in runner.commands
-    )
-end
-
-@testset "create_package_with_jll" begin
-    runner = FakeCommandRunner()
-    codecov_token = "codecov-secret"
-    private_key = "documenter-secret"
-
-    result = PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg",
-        ["Shuhei Ohno"],
-        "My special package",
-        codecov_token;
-        command_runner = runner,
-        key_generator = () -> ("ssh-ed25519 public", private_key),
-    )
-
-    @test result
-    @test any(occursin("repo create", command) for command in runner.commands)
-    @test any(occursin("auth setup-git", command) for command in runner.commands)
-    @test any(occursin("remote add origin", command) for command in runner.commands)
-    @test any(occursin("push -u origin main", command) for command in runner.commands)
-    @test any(occursin("config user.name ohno", command) for command in runner.commands)
-    @test any(
-        occursin("config user.email 59360244+ohno@users.noreply.github.com", command) for
-        command in runner.commands
-    )
-    @test any(occursin("git/ref/heads/main", command) for command in runner.commands)
-    @test any(occursin("DOCUMENTER_KEY", command) for command in runner.commands)
-    @test any(occursin("CODECOV_TOKEN", command) for command in runner.commands)
-    @test !any(occursin(codecov_token, command) for command in runner.commands)
-    @test !any(occursin(private_key, command) for command in runner.commands)
-    @test codecov_token in runner.inputs
-    @test private_key in runner.inputs
-
-    setup_git_index =
-        findfirst(occursin("auth setup-git", command) for command in runner.commands)
-    @test !isnothing(setup_git_index)
-    @test occursin(
-        dirname(first(PkgFactory.LocalAPI.git_executable().exec)),
-        runner.environments[setup_git_index]["PATH"],
-    )
-
-    create_index =
-        findfirst(occursin("repo create", command) for command in runner.commands)
-    main_ref_index =
-        findfirst(occursin("git/ref/heads/main", command) for command in runner.commands)
-    @test !isnothing(create_index)
-    @test !isnothing(main_ref_index)
-    @test create_index < main_ref_index
-
-    runner_without_codecov = FakeCommandRunner()
-    @test PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg",
-        ["Shuhei Ohno"],
-        "My special package";
-        command_runner = runner_without_codecov,
-        key_generator = () -> ("ssh-ed25519 public", "documenter-secret"),
-    )
-    @test !any(
-        occursin("CODECOV_TOKEN", command) for command in runner_without_codecov.commands
-    )
-
-    runner_with_substring = FakeCommandRunner()
-    substring_token = strip(" codecov-secret ")
-    @test substring_token isa SubString{String}
-    @test PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg",
-        ["Shuhei Ohno"],
-        "My special package",
-        substring_token;
-        command_runner = runner_with_substring,
-        key_generator = () -> ("ssh-ed25519 public", "documenter-secret"),
-    )
-    @test "codecov-secret" in runner_with_substring.inputs
-end
-
-@testset "resume preserves existing package files" begin
-    existing_uuid = "12345678-1234-5678-1234-567812345678"
-    runner = FakeCommandRunner(
-        repository_exists = true,
-        project_file = "name = \"MyPkg\"\nuuid = \"$(existing_uuid)\"\n",
-    )
-    @test PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno", "MyPkg", ["Different Author"], "Changed description";
-        template_name = "minimum", resume = true, command_runner = runner,
-        key_generator = () -> ("ssh-ed25519 public", "documenter-secret"),
-    )
-    @test !any(occursin(" clone ", command) || occursin(" commit ", command) ||
-               occursin(" push ", command) || occursin("diff --cached", command)
-               for command in runner.commands)
-    @test any(occursin("DOCUMENTER_KEY", command) for command in runner.commands)
-
-    runner = FakeCommandRunner(
-        repository_exists = true,
-        project_file = nothing,
-        main_branch_exists = true,
-        gh_pages_exists = true,
-        deploy_key_exists = true,
-        documenter_secret_exists = true,
-    )
-    @test_throws ErrorException PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package";
-        resume = true,
-        command_runner = runner,
-        key_generator = () -> error("Keys must not be regenerated"),
-    )
-    @test !any(occursin(" clone ", command) || occursin(" push ", command) for command in runner.commands)
-    @test !any(occursin("repo create", command) for command in runner.commands)
-
-    runner = FakeCommandRunner(
-        repository_exists = true,
-        project_file = nothing,
-        main_branch_exists = false,
-    )
-    @test PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package";
-        resume = true,
-        command_runner = runner,
-        key_generator = () -> ("ssh-ed25519 public", "documenter-secret"),
-    )
-    @test !any(occursin("repo create", command) for command in runner.commands)
-    @test !any(occursin(" clone ", command) for command in runner.commands)
-    @test any(occursin("push -u origin main", command) for command in runner.commands)
-
-    runner =
-        FakeCommandRunner(repository_exists = true, project_file = "name = \"OtherPkg\"\n")
-    @test_throws ErrorException PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package",
-        "codecov-secret";
-        resume = true,
-        command_runner = runner,
-    )
-end
-
-@testset "local API errors" begin
-    runner = FakeCommandRunner(; authenticated = false)
-    @test_throws ErrorException PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package",
-        "codecov-secret";
-        command_runner = runner,
-    )
-
-    runner = FakeCommandRunner(; repository_exists = true)
-    @test_throws ErrorException PkgFactory.LocalAPI.create_package_with_jll(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package",
-        "codecov-secret";
-        command_runner = runner,
-    )
-
-    secret = "must-not-appear"
-    failing_runner =
-        function (cmd::Cmd; env::Dict{String,String}, input::Union{Nothing,String})
-            return false, secret, "failed with $(secret)"
-        end
-    error_message = try
-        PkgFactory.LocalAPI._run_command_or_throw(
-            `fake command`;
-            input = secret,
-            redactions = [secret],
-            command_runner = failing_runner,
-        )
-        ""
-    catch e
-        sprint(showerror, e)
-    end
-    @test !occursin(secret, error_message)
-    @test occursin("[REDACTED]", error_message)
-end
-
-@testset "JLL executable paths" begin
-    @test !isempty(string(PkgFactory.LocalAPI.git_executable()))
-    @test !isempty(string(PkgFactory.LocalAPI.gh_executable()))
-end
-
-@testset "local UI package name suggestions" begin
-    @test PkgFactory.LocalUI._suggest_package_names(
-        "MyPkg.jl",
-        ["MyPkg.jl", "MyPkg02.jl", "MyPkg63.jl"],
-    ) == ["MyPkg64", "MyPkg65", "MyPkg66"]
-
-    existing_repository_names =
-        vcat(["MyPkg.jl"], ["MyPkg$(suffix).jl" for suffix = 1:64])
-    input = IOBuffer(
-        join(
-            [
-                "1",
-                "MyPkg",
-                "n",
-                "",
-                "Alice Smith",
-                "My package description",
-                "",
-                "",
-                "",
-                "",
-                "y",
-            ],
-            "\n",
-        ) * "\n",
-    )
-    output = IOBuffer()
-    creator = FakePackageCreator(Any[], true)
-
-    @test PkgFactory.LocalUI.CLI(;
-        input = input,
-        output = output,
-        environment = Dict{String,String}(),
-        status_checker = () -> true,
-        package_creator = creator,
-        repository_checker = (owner, repo) -> repo == "MyPkg.jl",
-        repository_names_provider = owner -> existing_repository_names,
-        registered_package_names_provider = package -> String[],
-        repository_owners_provider = () ->
-            [(login = "ohno", name = "Shuhei OHNO", kind = :user),],
-        templates_provider = () -> ["minimum", "all-in-one"],
-    )
-
-    text = String(take!(output))
-    @test occursin("Repository ohno/MyPkg.jl already exists.", text)
-    @test occursin("Available package name suggestions:", text)
-    @test occursin("1. MyPkg65 (default)", text)
-    @test occursin("2. MyPkg66", text)
-    @test occursin("3. MyPkg67", text)
-    @test only(creator.calls).args[2] == "MyPkg65.jl"
-    @test !only(creator.calls).options.resume
-end
-
-@testset "registered package name suggestions" begin
-    input = IOBuffer(
-        join(
-            [
-                "1",
-                "MyPkg",
-                "",
-                "Alice Smith",
-                "My package description",
-                "",
-                "",
-                "",
-                "",
-                "y",
-            ],
-            "\n",
-        ) * "\n",
-    )
-    output = IOBuffer()
-    creator = FakePackageCreator(Any[], true)
-
-    @test PkgFactory.LocalUI.CLI(;
-        input = input,
-        output = output,
-        environment = Dict{String,String}(),
-        status_checker = () -> true,
-        package_creator = creator,
-        repository_checker = (owner, repo) -> false,
-        repository_names_provider = owner -> String[],
-        registered_package_names_provider = package -> ["MyPkg", "MyPkg1"],
-        repository_owners_provider = () ->
-            [(login = "ohno", name = "Shuhei OHNO", kind = :user),],
-        templates_provider = () -> ["minimum", "all-in-one"],
-    )
-
-    text = String(take!(output))
-    @test occursin("Package MyPkg is already registered.", text)
-    @test occursin("1. MyPkg2 (default)", text)
-    @test only(creator.calls).args[2] == "MyPkg2.jl"
-    @test !only(creator.calls).options.resume
-end
-
-@testset "interactive local UI" begin
-    input = IOBuffer(
-        join(
-            [
-                "2",
-                "invalid",
-                "MyPkg",
-                "Alice, Bob",
-                "My package description",
-                "3",
-                "2",
-                "",
-                "",
-                "y",
-            ],
-            "\n",
-        ) * "\n",
-    )
-    output = IOBuffer()
-    creator = FakePackageCreator(Any[], true)
-    repository_owners = [
-        (login = "ohno", name = "Shuhei OHNO", kind = :user),
-        (login = "qumpoo", name = "QUMPOO", kind = :organization),
-    ]
-
-    @test PkgFactory.LocalUI.CLI(;
-        input = input,
-        output = output,
-        environment = Dict{String,String}(),
-        status_checker = () -> true,
-        package_creator = creator,
-        repository_checker = (owner, repo) -> false,
-        registered_package_names_provider = package -> String[],
-        repository_owners_provider = () -> repository_owners,
-        templates_provider = () -> ["minimum", "all-in-one", "simple"],
-    )
-
-    text = String(take!(output))
-    @test occursin("Invalid input", text)
-    @test occursin("@ohno", text)
-    @test occursin("@qumpoo", text)
-    @test occursin("qumpoo/MyPkg.jl", text)
-    @test occursin("Created: https://github.com/qumpoo/MyPkg.jl", text)
-    @test !occursin("Resume its setup?", text)
-    @test occursin("Select repository owner (default: 1):", text)
-    @test occursin("Package templates available:", text)
-    @test occursin("1. all-in-one (default)", text)
-    @test occursin("2. simple", text)
-    @test occursin("3. minimum", text)
-    @test occursin("Select template (default: 1):", text)
-    @test occursin("Package name (example: MyPkg):", text)
-    @test occursin(
-        "Authors (comma-separated; written to LICENSE) (example: Alice Smith, Bob Jones):",
-        text,
-    )
-    @test occursin("Package description (example: Tools for data analysis):", text)
-    @test occursin("Repository visibility:", text)
-    @test occursin("1. public (default)", text)
-    @test occursin("2. private", text)
-    @test occursin("Select visibility (default: 1):", text)
-    @test occursin("Initial commit message (default: Using PkgFactory.jl):", text)
-    @test !occursin("Codecov token", text)
-    @test !occursin("Global Upload Token", text)
-    @test occursin("Please answer y or n.", text)
-    @test length(
-        collect(eachmatch(r"Create this repository\? \(example: y\) \(y/n\):", text)),
-    ) == 2
-    @test occursin("Codecov:     not included", text)
-    @test first(findfirst("Package configuration", text)) <
-          first(findfirst("Create this repository?", text))
-    @test !occursin("codecov-secret", text)
-    @test length(creator.calls) == 1
-
-    call = only(creator.calls)
-    @test call.args == (
-        "qumpoo",
-        "MyPkg.jl",
-        ["Alice", "Bob"],
-        "My package description",
-        "",
-    )
-    @test call.options.template_name == "minimum"
-    @test call.options.visibility == "private"
-    @test call.options.commit_message == "Using PkgFactory.jl"
-    @test !call.options.resume
-    @test call.args[5] isa String
-end
-
-@testset "local UI coverage needs no token" begin
-    for (kind, template) in ((:user, "simple"), (:organization, "all-in-one"))
-        creator = FakePackageCreator(Any[], true)
-        output = IOBuffer()
-        @test PkgFactory.LocalUI.CLI(;
-            input = IOBuffer("1\nCoveragePkg\nAlice\nCoverage example\n\n\n\ny\n"),
-            output,
-            environment = Dict("CODECOV_TOKEN" => "unused-legacy-token"),
-            secret_reader = () -> error("Coverage must not prompt for a secret"),
-            status_checker = () -> true,
-            package_creator = creator,
-            repository_checker = (owner, repo) -> false,
-            registered_package_names_provider = package -> String[],
-            repository_owners_provider = () -> [(login = "example", name = "Example", kind)],
-            templates_provider = () -> [template],
-        )
-        @test only(creator.calls).args[5] == ""
-        text = String(take!(output))
-        @test occursin("OIDC (no token required)", text)
-        @test occursin("allow the Codecov GitHub App", text)
-        @test !occursin("Please answer y or n.", text)
-    end
-end
-
-@testset "resume existing repository from local UI" begin
-    input = IOBuffer(
-        join(
-            [
-                "1",
-                "MyPkg",
-                "y",
-                "Alice",
-                "My package description",
-                "",
-                "",
-                "",
-                "",
-                "y",
-            ],
-            "\n",
-        ) * "\n",
-    )
-    output = IOBuffer()
-    creator = FakePackageCreator(Any[], true)
-
-    @test PkgFactory.LocalUI.CLI(;
-        input = input,
-        output = output,
-        environment = Dict{String,String}(),
-        status_checker = () -> true,
-        package_creator = creator,
-        repository_checker = (owner, repo) -> true,
-        registered_package_names_provider =
-            package -> error("Registered packages must not be loaded when resuming"),
-        repository_owners_provider = () ->
-            [(login = "ohno", name = "Shuhei OHNO", kind = :user),],
-        templates_provider = () -> ["minimum", "all-in-one"],
-    )
-
-    text = String(take!(output))
-    @test occursin("Repository ohno/MyPkg.jl already exists.", text)
-    @test occursin("Resume its setup? (default: n) (y/n):", text)
-    @test occursin("1. all-in-one (default)", text)
-    @test occursin("Codecov:     OIDC (no token required)", text)
-    @test occursin("https://app.codecov.io/", text)
-    @test only(creator.calls).args[5] == ""
-    @test only(creator.calls).options.template_name == "all-in-one"
-    @test only(creator.calls).options.resume
-    @test occursin("Resuming setup preserves existing package files.", text)
-end
-
-@testset "local UI cancellation" begin
-    creator = FakePackageCreator(Any[], true)
-    output = IOBuffer()
-    @test !PkgFactory.LocalUI.CLI(;
-        input = IOBuffer("n\n"),
-        output = output,
-        status_checker = () -> false,
-        login_handler = () -> error("Login must not run"),
-        package_creator = creator,
-    )
-    @test isempty(creator.calls)
-    text = String(take!(output))
-    @test occursin("Log in to GitHub now? (default: y) (y/n):", text)
-    @test occursin("authentication is required", text)
-
-    input = IOBuffer("1\nMyPkg\nAlice\nMy package description\n\n\n\n\nn\n")
-    output = IOBuffer()
-    @test !PkgFactory.LocalUI.CLI(;
-        input = input,
-        output = output,
-        status_checker = () -> true,
-        package_creator = creator,
-        repository_checker = (owner, repo) -> false,
-        registered_package_names_provider = package -> String[],
-        repository_owners_provider = () ->
-            [(login = "ohno", name = "Shuhei OHNO", kind = :user),],
-        templates_provider = () -> ["all-in-one", "minimum"],
-    )
-    @test isempty(creator.calls)
-    text = String(take!(output))
-    @test occursin("Codecov:     OIDC (no token required)", text)
-    @test occursin("no repository was created", text)
-end
-
 @testset "web OAuth device flow" begin
     calls = NamedTuple[]
     requester = function (method, url; headers, body, status_exception)
@@ -1166,13 +399,13 @@ end
                 "scope" => "read:user,repo",
             )
         end
-        return PkgFactory.WebAPI.HTTP.Response(
+        return PkgFactory.HTTP.Response(
             200,
-            PkgFactory.WebAPI.JSON3.write(response),
+            PkgFactory.JSON3.write(response),
         )
     end
 
-    device = PkgFactory.WebAPI.device_flow_begin("client-id"; requester = requester)
+    device = PkgFactory.device_flow_begin("client-id"; requester = requester)
     @test device["user_code"] == "ABCD-1234"
     @test occursin("client_id=client-id", calls[1].body)
     @test occursin(
@@ -1180,7 +413,7 @@ end
         calls[1].body,
     )
 
-    token = PkgFactory.WebAPI.device_flow_poll(
+    token = PkgFactory.device_flow_poll(
         "device-code",
         "client-id";
         requester = requester,
@@ -1189,7 +422,7 @@ end
     @test occursin("device_code=device-code", calls[2].body)
 
     connection_error = try
-        PkgFactory.WebAPI.device_flow_begin(
+        PkgFactory.device_flow_begin(
             "client-id";
             requester = (args...; kwargs...) -> error("internal network detail"),
         )
@@ -1197,7 +430,7 @@ end
     catch error
         error
     end
-    @test connection_error isa PkgFactory.WebAPI.GitHubAPIError
+    @test connection_error isa PkgFactory.GitHubAPIError
     @test connection_error.status == 503
     @test !occursin("internal network detail", sprint(showerror, connection_error))
 end
@@ -1210,13 +443,13 @@ end
             endswith(url, "/user") ?
             Dict("login" => "ohno", "name" => "Shuhei OHNO") :
             [Dict("login" => "ZetaOrg"), Dict("login" => "AlphaOrg")]
-        return PkgFactory.WebAPI.HTTP.Response(
+        return PkgFactory.HTTP.Response(
             200,
-            PkgFactory.WebAPI.JSON3.write(response),
+            PkgFactory.JSON3.write(response),
         )
     end
 
-    owners = PkgFactory.WebAPI.get_repository_owners("token"; requester = requester)
+    owners = PkgFactory.get_repository_owners("token"; requester = requester)
     @test getindex.(owners, "login") == ["ohno", "AlphaOrg", "ZetaOrg"]
     @test getindex.(owners, "kind") == ["user", "organization", "organization"]
 
@@ -1224,12 +457,12 @@ end
         response = endswith(url, "/user") ? Dict("login" => "ohno", "name" => nothing) :
                    Dict("message" => "Resource not accessible by integration")
         status = endswith(url, "/user") ? 200 : 403
-        return PkgFactory.WebAPI.HTTP.Response(
+        return PkgFactory.HTTP.Response(
             status,
-            PkgFactory.WebAPI.JSON3.write(response),
+            PkgFactory.JSON3.write(response),
         )
     end
-    personal_only = PkgFactory.WebAPI.get_repository_owners(
+    personal_only = PkgFactory.get_repository_owners(
         "token";
         requester = personal_only_requester,
     )
@@ -1245,19 +478,19 @@ end
         @test endswith(url, "/repos/ohno/MyPackage.jl")
         status = popfirst!(statuses)
         response = status == 404 ? Dict("message" => "Not Found") : Dict("name" => "MyPackage.jl")
-        return PkgFactory.WebAPI.HTTP.Response(
+        return PkgFactory.HTTP.Response(
             status,
-            PkgFactory.WebAPI.JSON3.write(response),
+            PkgFactory.JSON3.write(response),
         )
     end
 
-    available = PkgFactory.WebAPI.repository_availability(
+    available = PkgFactory.repository_availability(
         "token",
         "ohno",
         "MyPackage";
         requester = requester,
     )
-    existing = PkgFactory.WebAPI.repository_availability(
+    existing = PkgFactory.repository_availability(
         "token",
         "ohno",
         "MyPackage.jl";
@@ -1265,7 +498,7 @@ end
     )
     @test available == Dict("available" => true, "repository" => "ohno/MyPackage.jl")
     @test existing == Dict("available" => false, "repository" => "ohno/MyPackage.jl")
-    @test_throws PkgFactory.WebAPI.InputError PkgFactory.WebAPI.repository_availability(
+    @test_throws PkgFactory.InputError PkgFactory.repository_availability(
         "token",
         "ohno",
         "lowercase";
@@ -1282,12 +515,12 @@ end
             attempts[] < 3 ?
             (404, Dict("message" => "Not Found")) :
             (200, Dict("object" => Dict("sha" => "initial-sha")))
-        return PkgFactory.WebAPI.HTTP.Response(
+        return PkgFactory.HTTP.Response(
             status,
-            PkgFactory.WebAPI.JSON3.write(response),
+            PkgFactory.JSON3.write(response),
         )
     end
-    sha = PkgFactory.WebAPI._branch_head(
+    sha = PkgFactory._branch_head(
         "token",
         "ohno",
         "MyPackage.jl",
@@ -1300,14 +533,14 @@ end
     @test delays == [1.0, 2.0]
 
     error = try
-        PkgFactory.WebAPI._branch_head(
+        PkgFactory._branch_head(
             "token",
             "ohno",
             "MyPackage.jl",
             "missing";
-            requester = (args...; kwargs...) -> PkgFactory.WebAPI.HTTP.Response(
+            requester = (args...; kwargs...) -> PkgFactory.HTTP.Response(
                 404,
-                PkgFactory.WebAPI.JSON3.write(Dict("message" => "Not Found")),
+                PkgFactory.JSON3.write(Dict("message" => "Not Found")),
             ),
             attempts = 1,
             sleeper = _ -> nothing,
@@ -1316,7 +549,7 @@ end
     catch caught
         caught
     end
-    @test error isa PkgFactory.WebAPI.GitHubAPIError
+    @test error isa PkgFactory.GitHubAPIError
     @test occursin("GET /repos/ohno/MyPackage.jl/git/ref/heads/missing", error.message)
 end
 
@@ -1351,26 +584,26 @@ end
         elseif method == "POST" && endswith(url, "/keys")
             201, Dict("id" => 1)
         elseif method == "GET" && endswith(url, "/actions/secrets/public-key")
-            200, Dict("key" => PkgFactory.WebAPI.Base64.base64encode(zeros(UInt8, 32)), "key_id" => "key-id")
+            200, Dict("key" => PkgFactory.Base64.base64encode(zeros(UInt8, 32)), "key_id" => "key-id")
         elseif method == "PUT" && endswith(url, "/actions/secrets/DOCUMENTER_KEY")
             204, Dict()
         elseif method == "GET" && endswith(url, "/contents/.pkgfactory.json")
             tree_call = only(filter(call -> endswith(call.url, "/git/trees"), calls))
-            tree = PkgFactory.WebAPI.JSON3.read(tree_call.body, Dict{String,Any})
+            tree = PkgFactory.JSON3.read(tree_call.body, Dict{String,Any})
             marker = only(filter(entry -> entry["path"] == ".pkgfactory.json", tree["tree"]))["content"]
-            200, Dict("content" => PkgFactory.WebAPI.Base64.base64encode(marker), "sha" => "marker-sha")
+            200, Dict("content" => PkgFactory.Base64.base64encode(marker), "sha" => "marker-sha")
         elseif method == "PUT" && endswith(url, "/contents/.pkgfactory.json")
             200, Dict()
         else
             error("Unexpected GitHub request: $(method) $(url)")
         end
-        return PkgFactory.WebAPI.HTTP.Response(
+        return PkgFactory.HTTP.Response(
             status,
-            PkgFactory.WebAPI.JSON3.write(response),
+            PkgFactory.JSON3.write(response),
         )
     end
 
-    result = PkgFactory.WebAPI.create_package(
+    result = PkgFactory.create_package(
         "token",
         "ohno",
         "MyPackage",
@@ -1387,7 +620,7 @@ end
     @test !result["resumed"]
     @test any(call -> call.method == "POST" && endswith(call.url, "/user/repos"), calls)
     tree_call = only(filter(call -> endswith(call.url, "/git/trees"), calls))
-    tree_body = PkgFactory.WebAPI.JSON3.read(tree_call.body, Dict{String,Any})
+    tree_body = PkgFactory.JSON3.read(tree_call.body, Dict{String,Any})
     @test tree_body["base_tree"] == "base-tree"
     @test any(entry -> entry["path"] == "Project.toml", tree_body["tree"])
     if template == "minimum"
@@ -1407,21 +640,21 @@ end
 
 @testset "web repository secret encryption" begin
     encrypted_request = Ref("")
-    public_key = PkgFactory.WebAPI.Base64.base64encode(zeros(UInt8, 32))
+    public_key = PkgFactory.Base64.base64encode(zeros(UInt8, 32))
     requester = function (method, url; headers, body, status_exception)
         if method == "GET"
-            return PkgFactory.WebAPI.HTTP.Response(
+            return PkgFactory.HTTP.Response(
                 200,
-                PkgFactory.WebAPI.JSON3.write(
+                PkgFactory.JSON3.write(
                     Dict("key" => public_key, "key_id" => "key-id"),
                 ),
             )
         end
         encrypted_request[] = body
-        return PkgFactory.WebAPI.HTTP.Response(201, "")
+        return PkgFactory.HTTP.Response(201, "")
     end
 
-    PkgFactory.WebAPI._set_repository_secret(
+    PkgFactory._set_repository_secret(
         "token",
         "ohno",
         "MyPackage.jl",
@@ -1430,96 +663,15 @@ end
         requester = requester,
     )
     request_body =
-        PkgFactory.WebAPI.JSON3.read(encrypted_request[], Dict{String,Any})
+        PkgFactory.JSON3.read(encrypted_request[], Dict{String,Any})
     ciphertext =
-        PkgFactory.WebAPI.Base64.base64decode(request_body["encrypted_value"])
+        PkgFactory.Base64.base64decode(request_body["encrypted_value"])
     @test request_body["key_id"] == "key-id"
     @test length(ciphertext) == 6 + 48
 end
 
-@testset "web UI HTTP routes" begin
-    root = PkgFactory.WebUI.handle_request(
-        PkgFactory.WebUI.HTTP.Request("GET", "/"),
-    )
-    @test root.status == 200
-    @test occursin("PkgFactory", String(root.body))
-    @test occursin("Create repository", String(root.body))
-    @test occursin("Generate package template", String(root.body))
-    @test occursin("value=\"MyPkg\"", String(root.body))
-    @test occursin("workflow, profile", String(root.body))
-    @test occursin("PkgFactory recovery marker", String(root.body))
-    @test occursin("default-src", PkgFactory.WebUI.HTTP.header(
-        root,
-        "Content-Security-Policy",
-    ))
 
-    stylesheet = PkgFactory.WebUI.handle_request(
-        PkgFactory.WebUI.HTTP.Request("GET", "/style.css"),
-    )
-    javascript = PkgFactory.WebUI.handle_request(
-        PkgFactory.WebUI.HTTP.Request("GET", "/app.js"),
-    )
-    @test stylesheet.status == 200
-    @test occursin("prefers-color-scheme", String(stylesheet.body))
-    @test javascript.status == 200
-    @test occursin("connectGitHub", String(javascript.body))
-    @test occursin("requiredScopes", String(javascript.body))
-    @test occursin("setDefaultAuthor(owners[0])", String(javascript.body))
-    @test occursin("checkPackageAvailability", String(javascript.body))
-    @test occursin("package-availability", String(root.body))
-
-    logo = PkgFactory.WebUI.handle_request(
-        PkgFactory.WebUI.HTTP.Request("GET", "/assets/logo.svg"),
-    )
-    @test logo.status == 200
-    @test PkgFactory.WebUI.HTTP.header(logo, "Content-Type") == "image/svg+xml; charset=utf-8"
-    @test String(logo.body) == read(joinpath(@__DIR__, "..", "docs", "src", "assets", "logo.svg"), String)
-
-    config = PkgFactory.WebUI.handle_request(
-        PkgFactory.WebUI.HTTP.Request("GET", "/api/config");
-        client_id = "test-client",
-    )
-    config_body = PkgFactory.WebAPI.JSON3.read(String(config.body), Dict{String,Any})
-    @test config.status == 200
-    @test config_body["client_id"] == "test-client"
-    @test "all-in-one" in config_body["templates"]
-
-    unauthorized = PkgFactory.WebUI.handle_request(
-        PkgFactory.WebUI.HTTP.Request("GET", "/api/github/owners"),
-    )
-    @test unauthorized.status == 401
-    @test occursin("authentication is required", String(unauthorized.body))
-
-    availability_requester = function (method, url; headers, body, status_exception)
-        @test method == "GET"
-        @test endswith(url, "/repos/ohno/MyPackage.jl")
-        return PkgFactory.WebAPI.HTTP.Response(
-            404,
-            PkgFactory.WebAPI.JSON3.write(Dict("message" => "Not Found")),
-        )
-    end
-    availability = PkgFactory.WebUI.handle_request(
-        PkgFactory.WebUI.HTTP.Request(
-            "POST",
-            "/api/github/repository-availability",
-            ["Authorization" => "Bearer token", "Content-Type" => "application/json"],
-            PkgFactory.WebAPI.JSON3.write(
-                Dict("owner" => "ohno", "package_name" => "MyPackage"),
-            ),
-        );
-        requester = availability_requester,
-    )
-    availability_body = PkgFactory.WebAPI.JSON3.read(
-        String(availability.body),
-        Dict{String,Any},
-    )
-    @test availability.status == 200
-    @test availability_body["available"]
-    @test availability_body["repository"] == "ohno/MyPackage.jl"
-end
-
-include("web_hardening.jl")
-
-# These tests use only temporary local Git repositories, never GitHub.
+include("core.jl")
+include("recovery.jl")
 include("e2e/sync_tests.jl")
 include("citation.jl")

@@ -1,0 +1,3 @@
+using PkgFactoryMCP
+
+PkgFactoryMCP.main()

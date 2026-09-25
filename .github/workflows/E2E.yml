@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'templates/**'
-      - 'src/Templates.jl'
+      - 'src/templates.jl'
       - 'test/e2e/**'
       - '.github/workflows/E2E.yml'
   workflow_dispatch:

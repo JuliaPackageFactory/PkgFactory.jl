@@ -44,7 +44,7 @@ function _guard_request(request, policy, client_ip)
         _rate_limit!(policy, client_ip, "oauth_poll", 60)
     elseif path == "/api/packages"
         token = _access_token(request)
-        _rate_limit!(policy, bytes2hex(WebAPI.SHA.sha256(token)), "create", 5)
+        _rate_limit!(policy, bytes2hex(PkgFactory.SHA.sha256(token)), "create", 5)
     end
     if method == "POST"
         length(request.body) <= policy.max_body_bytes || throw(RequestError(413, "Request body is too large."))
@@ -54,23 +54,12 @@ function _guard_request(request, policy, client_ip)
 end
 
 function _fields(body, allowed, required=String[])
-    all(key -> key in allowed, keys(body)) || throw(WebAPI.InputError("Unknown field."))
-    all(key -> haskey(body, key), required) || throw(WebAPI.InputError("Required field is missing."))
+    all(key -> key in allowed, keys(body)) || throw(PkgFactory.InputError("Unknown field."))
+    all(key -> haskey(body, key), required) || throw(PkgFactory.InputError("Required field is missing."))
 end
 
 function _package_body(request)
-    body = _json_body(request)
-    _fields(body, ["owner", "package_name", "authors", "description", "codecov_token",
-        "template", "visibility", "commit_message", "resume"], ["owner", "package_name", "authors", "description"])
-    for (name, limit) in [("owner", 100), ("package_name", 100), ("description", 2000),
-        ("codecov_token", 4096), ("template", 100), ("visibility", 10), ("commit_message", 500)]
-        haskey(body, name) && WebAPI._bounded_text(body[name], name, limit; empty=name in ("description", "codecov_token"))
-    end
-    authors = body["authors"]
-    authors isa AbstractVector && 1 <= length(authors) <= 20 || throw(WebAPI.InputError("authors must contain 1 to 20 names."))
-    foreach(author -> WebAPI._bounded_text(author, "author", 200), authors)
-    get(body, "resume", false) isa Bool || throw(WebAPI.InputError("resume must be a boolean."))
-    body
+    _json_body(request)
 end
 
 function _error_response(err)
@@ -79,12 +68,12 @@ function _error_response(err)
         response = _json_response(err.status, Dict("error" => err.message))
         err.status == 429 && push!(response.headers, "Retry-After" => "60")
         return response
-    elseif err isa WebAPI.InputError
+    elseif err isa PkgFactory.InputError
         return _json_response(400, Dict("error" => err.message))
-    elseif err isa WebAPI.CreationError
+    elseif err isa PkgFactory.CreationError
         return _json_response(err.status, Dict("error" => sprint(showerror, err), "stage" => err.stage,
             "check_status" => true))
-    elseif err isa WebAPI.GitHubAPIError
+    elseif err isa PkgFactory.GitHubAPIError
         # Do not reflect upstream response text, URLs or arbitrary exceptions.
         response = _json_response(err.status, Dict("error" => "GitHub request failed. Check authorization and repository status."))
         isnothing(err.retry_after) || push!(response.headers, "Retry-After" => string(clamp(err.retry_after, 1, 3600)))
@@ -95,7 +84,7 @@ end
 
 function _serve_stream(stream, policy, handler, trusted_proxies)
     request = stream.message
-    request_id = string(WebAPI.UUIDs.uuid4())
+    request_id = string(PkgFactory.UUIDs.uuid4())
     started = time_ns()
     peer = string(first(Sockets.getpeername(stream)))
     # X-Real-IP is used only for an explicitly trusted immediate peer. That

@@ -9,6 +9,12 @@ julia --project=docs --startup-file=no -e 'using Pkg; Pkg.develop(PackageSpec(pa
 julia --project=docs --startup-file=no -e 'include("docs/make.jl")'
 ```
 
+Application environments are independent. Run `julia scripts/setup.jl` with Julia
+1.12 to initialize all three, then run `Pkg.test()` under each `apps/*` project.
+All package settings, defaults and creation behavior belong in the core. Apps
+may translate input, manage authentication and present results, but must not
+implement a second creation engine.
+
 Run Tests:
 
 ```sh
@@ -23,10 +29,10 @@ julia --project=. -e 'import Pkg; Pkg.resolve()'
 julia --project=. -e 'import Pkg; Pkg.instantiate()'
 ```
 
-Development REPL (with Revise):
+Development REPL:
 
 ```sh
-julia -i -E 'using Revise; import Pkg; Pkg.activate("."); using PkgFactory; PkgFactory.hello()'
+julia --project=. --startup-file=no -i -e 'using PkgFactory'
 ```
 
 Default tests use test doubles and temporary local Git repositories. They do not write to GitHub.
@@ -101,7 +107,7 @@ sequenceDiagram
   participant GitHub as GitHub Rest API & Web
 
   %% get device code
-  UI->>App: call API (Oxygen.jl)
+  UI->>App: call core API
   App->>GitHub: POST /login/device/code (device_flow_begin)
   GitHub-->>App: device_code
   App-->>UI: device_code
@@ -109,13 +115,13 @@ sequenceDiagram
   %% get access token
   UI->>GitHub: visit website (copy & paste device_code)
   GitHub-->>UI: redirect (or go back by hand)
-  UI->>App: call API (Oxygen.jl)
-  App->>GitHub: POST /login/oauth/access_token (device_flow_end)
+  UI->>App: call core API
+  App->>GitHub: POST /login/oauth/access_token (device_flow_poll)
   GitHub-->>App: access_token
   App-->>UI: access_token
 
   %% create repo using access token
-  UI->>App: call API (Oxygen.jl)
+  UI->>App: call core API
   App->>GitHub: create_repo, etc.
 ```
 

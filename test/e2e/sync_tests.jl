@@ -1,10 +1,11 @@
 module E2ESnapshotTests
+import Git
 using PkgFactory
 using Test
 include("sync.jl")
 
 @testset "initial snapshot in an empty repository" begin
-    git = PkgFactory.LocalAPI.git_executable()
+    git = Git.git()
     mktempdir() do root
         remote = joinpath(root, "empty.git")
         checkout = joinpath(root, "checkout")
@@ -28,7 +29,7 @@ include("sync.jl")
 end
 
 @testset "renamed template repositories preserve UUID and history" begin
-    git = PkgFactory.LocalAPI.git_executable()
+    git = Git.git()
     for (suffix, template) in [("Minimum", "minimum"), ("Simple", "simple"), ("AllInOne", "all-in-one")]
         @testset "$template" begin
             mktempdir() do root
@@ -67,7 +68,7 @@ end
 end
 
 @testset "E2E snapshot publishing with local Git" begin
-    git = PkgFactory.LocalAPI.git_executable()
+    git = Git.git()
     mktempdir() do root
         remote = joinpath(root, "remote.git")
         checkout = joinpath(root, "checkout")

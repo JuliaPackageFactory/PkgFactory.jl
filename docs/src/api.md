@@ -10,11 +10,7 @@ CurrentModule = PkgFactory
 ```@autodocs
 Modules = [
     PkgFactory,
-    PkgFactory.LocalAPI,
-    PkgFactory.LocalUI,
     PkgFactory.Templates,
     PkgFactory.Verifications,
-    PkgFactory.WebAPI,
-    PkgFactory.WebUI,
 ]
 ```

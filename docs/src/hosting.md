@@ -5,6 +5,10 @@ in the Authorization header. The server does not persist access tokens. Closing
 the tab clears its copy; it does not revoke the GitHub OAuth grant. No Auth0 or
 credential database is required for this deployment model.
 
+Run `julia --startup-file=no scripts/setup.jl web` from the repository root,
+then use `julia --project=apps/web` for the commands below. Static assets are
+self-contained under `apps/web/public/`.
+
 ## One server behind HTTPS
 
 Install Julia and OpenSSH (`ssh-keygen`, for documentation deploy keys).
@@ -19,10 +23,11 @@ export GITHUB_OAUTH_CLIENT_ID=YOUR_CLIENT_ID
 ```
 
 ```julia
-using PkgFactory
-PkgFactory.WebUI.start("127.0.0.1", 8000;
+using PkgFactoryWeb
+import PkgFactory
+PkgFactoryWeb.start("127.0.0.1", 8000;
     trusted_proxies=["127.0.0.1", "::1"],
-    requester=PkgFactory.WebAPI.GitHubTransport(connect_timeout=10, read_timeout=30))
+    requester=PkgFactory.GitHubTransport(connect_timeout=10, read_timeout=30))
 ```
 
 For a Caddy proxy on the same host:
@@ -72,7 +77,7 @@ not a test of GitHub availability.
 
 ## Recovery
 
-WebAPI commits `.pkgfactory.json` atomically with the generated template. It
+The core commits `.pkgfactory.json` atomically with the generated template. It
 contains a settings fingerprint, Project.toml digest and operation state, with
 no credentials. `PkgFactory.preview` includes this additional file in its plan.
 The final successful step records `complete` in a separate commit.

@@ -29,8 +29,20 @@ julia --project=docs --startup-file=no docs/make.jl
 
 `docs/make.jl` calls both `makedocs` and `deploydocs`; CI supplies the deployment credentials. Documentation output is written to `docs/build/`.
 
-Optional development REPL with Revise for quick iteration. Select the project before loading Revise:
+Optional development REPL (install Revise separately if desired):
 
 ```sh
-julia --project=. --startup-file=no -i -e 'using Revise; using PkgFactory; PkgFactory.hello()'
+julia --project=. --startup-file=no -i -e 'using PkgFactory'
 ```
+
+## Monorepo applications
+
+- Core code in `src/` must not collect input or contain CLI, Web, or MCP handlers.
+- Applications in `apps/cli`, `apps/web`, and `apps/mcp` depend only on the core,
+  never on each other. Shared settings, defaults, validation and creation belong
+  in `PackageSpec`, `package_schema`, `plan_package` and `create_package`.
+- Initialize application environments with `julia --startup-file=no scripts/setup.jl`.
+  Use Julia 1.12 for all apps; core/CLI/Web also support Julia 1.10+.
+- Test each application with `julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.test()'`.
+- Keep each app's Manifest committed with a relative `../..` core dependency.
+- Web assets belong in `apps/web/public/`. MCP supports stdio and Streamable HTTP.

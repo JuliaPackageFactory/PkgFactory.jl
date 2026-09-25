@@ -8,3 +8,5 @@
 
 # Jupyter Notebook
 .ipynb_checkpoints/
+
+!apps/*/Manifest.toml

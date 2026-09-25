@@ -1,16 +1,16 @@
 """Browser-based interface and local HTTP server for PkgFactory."""
-module WebUI
+module PkgFactoryWeb
 
 import DocStringExtensions
 import HTTP
 import JSON3
 import Sockets
 
-import ..Templates
-import ..WebAPI
+import PkgFactory
+import PkgFactory: Templates
 
-const WEB_ROOT = normpath(joinpath(@__DIR__, "web"))
-const LOGO_PATH = normpath(joinpath(@__DIR__, "..", "docs", "src", "assets", "logo.svg"))
+const WEB_ROOT = normpath(joinpath(@__DIR__, "..", "public"))
+const LOGO_PATH = normpath(joinpath(WEB_ROOT, "assets", "logo.svg"))
 
 hello() = "Hello, WebUI.jl!"
 
@@ -43,7 +43,7 @@ function _json_body(request::HTTP.Request)::Dict{String,Any}
     try
         return JSON3.read(String(request.body), Dict{String,Any})
     catch
-        throw(WebAPI.InputError("The request body must be a JSON object."))
+        throw(PkgFactory.InputError("The request body must be a JSON object."))
     end
 end
 
@@ -71,9 +71,9 @@ injectable so the complete workflow can be tested without network access.
 """
 function handle_request(
     request::HTTP.Request;
-    client_id::String = WebAPI.GITHUB_OAUTH_CLIENT_ID,
-    requester = WebAPI.GitHubTransport(),
-    key_generator = WebAPI._generate_keys,
+    client_id::String = PkgFactory.GITHUB_OAUTH_CLIENT_ID,
+    requester = PkgFactory.GitHubTransport(),
+    key_generator = PkgFactory._generate_keys,
     policy = DEFAULT_POLICY,
     client_ip = "local",
 )
@@ -118,24 +118,25 @@ function handle_request(
                 Dict(
                     "client_id" => client_id,
                     "templates" => Templates.list_templates(),
+                    "package_schema" => PkgFactory.package_schema(),
                 ),
             )
         elseif method == "POST" && path == "/api/oauth/device"
             _fields(_json_body(request), String[])
-            result = WebAPI.device_flow_begin(client_id; requester = requester)
+            result = PkgFactory.device_flow_begin(client_id; requester = requester)
             return _json_response(200, result)
         elseif method == "POST" && path == "/api/oauth/token"
             body = _json_body(request)
             _fields(body, ["device_code"], ["device_code"])
-            device_code = WebAPI._bounded_text(body["device_code"], "device_code", 1024)
-            result = WebAPI.device_flow_poll(
+            device_code = PkgFactory._bounded_text(body["device_code"], "device_code", 1024)
+            result = PkgFactory.device_flow_poll(
                 device_code,
                 client_id;
                 requester = requester,
             )
             return _json_response(200, result)
         elseif method == "GET" && path == "/api/github/owners"
-            owners = WebAPI.get_repository_owners(
+            owners = PkgFactory.get_repository_owners(
                 _access_token(request);
                 requester = requester,
             )
@@ -144,9 +145,9 @@ function handle_request(
             access_token = _access_token(request)
             body = _json_body(request)
             _fields(body, ["owner", "package_name"], ["owner", "package_name"])
-            WebAPI._bounded_text(body["owner"], "owner", 100)
-            WebAPI._bounded_text(body["package_name"], "package_name", 100)
-            lookup = endswith(path, "repository-status") ? WebAPI.repository_status : WebAPI.repository_availability
+            PkgFactory._bounded_text(body["owner"], "owner", 100)
+            PkgFactory._bounded_text(body["package_name"], "package_name", 100)
+            lookup = endswith(path, "repository-status") ? PkgFactory.repository_status : PkgFactory.repository_availability
             result = lookup(
                 access_token,
                 String(get(body, "owner", "")),
@@ -157,23 +158,10 @@ function handle_request(
         elseif method == "POST" && path == "/api/packages"
             access_token = _access_token(request)
             body = _package_body(request)
-            authors = String.(body["authors"])
-            result = WebAPI.create_package(
-                access_token,
-                String(get(body, "owner", "")),
-                String(get(body, "package_name", "")),
-                authors,
-                String(get(body, "description", "")),
-                String(get(body, "codecov_token", ""));
-                template_name = String(get(body, "template", "all-in-one")),
-                visibility = String(get(body, "visibility", "public")),
-                commit_message = String(
-                    get(body, "commit_message", "Using PkgFactory.jl"),
-                ),
-                resume = Bool(get(body, "resume", false)),
-                requester = requester,
-                key_generator = key_generator,
-            )
+            spec = PkgFactory.package_spec(body)
+            plan = PkgFactory.plan_package(spec)
+            credential = PkgFactory.Credential(access_token; codecov_token=get(body, "codecov_token", ""))
+            result = PkgFactory.create_package(credential, plan; requester, key_generator)
             return _json_response(201, result)
         end
         return _json_response(404, Dict("error" => "Not found."))
@@ -189,7 +177,7 @@ Start the local web interface. The default host accepts connections only from
 the current computer.
 
 ```julia
-PkgFactory.WebUI.start()
+PkgFactoryWeb.start()
 ```
 """
 function start(
@@ -199,8 +187,8 @@ function start(
     public_origin::AbstractString = get(ENV, "PUBLIC_ORIGIN", "http://$(host):$(port)"),
     max_body_bytes::Integer = 65536,
     trusted_proxies = String[],
-    client_id::String = get(ENV, "GITHUB_OAUTH_CLIENT_ID", WebAPI.GITHUB_OAUTH_CLIENT_ID),
-    requester = WebAPI.GitHubTransport(),
+    client_id::String = get(ENV, "GITHUB_OAUTH_CLIENT_ID", PkgFactory.GITHUB_OAUTH_CLIENT_ID),
+    requester = PkgFactory.GitHubTransport(),
 )
     @info "PkgFactory Web UI is available at http://$(host):$(port)/"
     policy = WebPolicy(; public_origin, max_body_bytes)

@@ -40,7 +40,7 @@ function updateWorkflowProgress() {
   const completed = {
     1: Boolean(state.owner),
     2: Boolean(state.owner && payload.owner && payload.package_name && repositoryAvailable),
-    3: Boolean(state.owner && payload.authors.length && payload.description && payload.template && payload.commit_message),
+    3: Boolean(state.owner && $("#authors").value && payload.template && payload.commit_message),
     4: Boolean(state.owner && payload.template && (state.automationReviewed || payload.template === "minimum")),
     5: state.creationStatus === "success",
   };
@@ -140,7 +140,22 @@ async function loadConfiguration() {
     option.textContent = name;
     templates.append(option);
   });
+  applyPackageDefaults();
   updateTemplateAutomation();
+}
+
+function applyPackageDefaults() {
+  const schema = state.config.package_schema;
+  const defaults = schema.properties;
+  $("#template").value = defaults.template.default;
+  $("#visibility").value = defaults.visibility.default;
+  $("#commit-message").value = defaults.commit_message.default;
+  $("#description").value = defaults.description.default;
+  $("#resume").checked = defaults.resume.default;
+  const fields = { owner: "#owner", name: "#package-name", authors: "#authors", description: "#description", commit_message: "#commit-message" };
+  Object.entries(fields).forEach(([name, selector]) => {
+    $(selector).required = schema.required.includes(name);
+  });
 }
 
 function setCreationStatus(status) {
@@ -253,15 +268,15 @@ async function connectGitHub() {
 }
 
 function packagePayload() {
-  const packageName = $("#package-name").value.trim().replace(/\.jl$/i, "");
+  const packageName = $("#package-name").value;
   return {
     owner: $("#owner").value,
     package_name: packageName,
-    authors: $("#authors").value.split(",").map((author) => author.trim()).filter(Boolean),
-    description: $("#description").value.trim(),
+    authors: $("#authors").value.split(",").map((author) => author.trim()),
+    description: $("#description").value,
     template: $("#template").value,
     visibility: $("#visibility").value,
-    commit_message: $("#commit-message").value.trim(),
+    commit_message: $("#commit-message").value,
     resume: $("#resume").checked,
   };
 }
@@ -271,10 +286,6 @@ async function createPackage(event) {
   if (state.creationStatus !== "idle") return;
   setError();
   const payload = packagePayload();
-  if (!payload.authors.length) {
-    setError("Enter at least one author.");
-    return;
-  }
   clearTimeout(state.availabilityTimer);
   setCreationStatus("checking");
   try {
@@ -324,12 +335,12 @@ async function createPackage(event) {
 function createAnother() {
   if (state.creationStatus !== "success") return;
   $("#package-form").reset();
+  applyPackageDefaults();
   state.automationReviewed = false;
   clearTimeout(state.availabilityTimer);
   state.availabilityRequest += 1;
   setAvailability(null, "");
   updateTemplateAutomation();
-  $("#commit-message").value = "Using PkgFactory.jl";
   if (state.owner) setDefaultAuthor(state.owner);
   setError();
   setCreationStatus("idle");
