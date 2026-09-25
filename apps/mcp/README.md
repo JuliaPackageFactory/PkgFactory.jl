@@ -146,7 +146,8 @@ Generated from the `minimum` template of
 
 This application was imported from JuliaPackageFactory/PkgFactoryMCP.jl
 at commit `0b16c0d106607e8dbdf47b4245a1d50189eb60a2` (MIT license retained).
-Run commands from the monorepo root after `julia scripts/setup.jl`. Package
+Run commands from the monorepo root after
+`julia --project=apps/mcp --startup-file=no -e 'import Pkg; Pkg.instantiate()'`. Package
 validation, defaults, template generation, creation and recovery are provided
 by the local core. Defaults are now `all-in-one/public`; pass
 `template="minimum", visibility="private"` explicitly to keep the former choice.

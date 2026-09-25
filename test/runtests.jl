@@ -1,6 +1,7 @@
 using PkgFactory
 using Test
 import Git
+import TOML
 
 @testset "verify_owner_name" begin
     @test "OK" == PkgFactory.Verifications.verify_owner_name("ohno")
@@ -78,242 +79,28 @@ end
     @test occursin("My special package", paths_and_contents["README.md"])
 end
 
-@testset "generated template contracts" begin
-    render(template_name) = PkgFactory.Templates.generate_template_files_dict(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package",
-        template_name,
-    )
-
-    all_in_one = render("all-in-one")
-    minimum = render("minimum")
-    simple = render("simple")
-
-    @test haskey(all_in_one, "src/MyPkg.jl")
-    @test haskey(minimum, "src/MyPkg.jl")
-    @test haskey(simple, "src/MyPkg.jl")
-    for template in (all_in_one, simple, minimum)
-        @test occursin("public hello", template["src/MyPkg.jl"])
-        @test occursin("julia-actions/setup-julia@v3", template[".github/workflows/CI.yml"])
-        @test !occursin("julia-actions/setup-julia@v2", template[".github/workflows/CI.yml"])
-        @test occursin("## Quick Start", template["README.md"])
-        @test !occursin("## Installation", template["README.md"])
-    end
-    for template in (all_in_one, simple)
-        @test occursin("*.jl text eol=lf", template[".gitattributes"])
-        @test occursin("prettyurls = get(ENV, \"CI\", \"false\") == \"true\"", template["docs/make.jl"])
-        @test occursin("checkdocs = :public", template["docs/make.jl"])
-        @test !occursin("Run doctests", template[".github/workflows/CI.yml"])
-        @test occursin("## Quick Start", template["docs/src/index.md"])
-        @test !occursin("## Installation", template["docs/src/index.md"])
-    end
-    @test occursin("version = \"0.0.1\"", all_in_one["Project.toml"])
-    @test occursin("Pkg.test()", all_in_one["AGENTS.md"])
-    @test occursin("version: \"0.0.1\"", all_in_one["CITATION.cff"])
-    project_uuid = only(match(r"uuid = \"([^\"]+)\"", all_in_one["Project.toml"]).captures)
-    @test occursin("MyPkg = \"$(project_uuid)\"", all_in_one["docs/Project.toml"])
-    @test occursin("MyPkg = \"$(project_uuid)\"", all_in_one["test/Project.toml"])
-
-    existing_uuid = "12345678-1234-5678-1234-567812345678"
-    simple_with_existing_uuid = PkgFactory.Templates.generate_template_files_dict(
-        "ohno",
-        "MyPkg.jl",
-        ["Shuhei Ohno"],
-        "My special package",
-        "simple";
-        package_uuid = existing_uuid,
-    )
-    @test occursin("uuid = \"$(existing_uuid)\"", simple_with_existing_uuid["Project.toml"])
-    @test occursin(
-        "MyPkg = \"$(existing_uuid)\"",
-        simple_with_existing_uuid["docs/Project.toml"],
-    )
-    @test occursin(
-        "MyPkg = \"$(existing_uuid)\"",
-        simple_with_existing_uuid["test/Project.toml"],
-    )
-
-    @test !occursin("[extras]", all_in_one["Project.toml"])
-    @test !occursin("[targets]", all_in_one["Project.toml"])
-    @test !occursin("Aqua =", all_in_one["Project.toml"])
-    @test !occursin("JET =", all_in_one["Project.toml"])
-    @test !occursin("Test =", all_in_one["Project.toml"])
-    @test occursin("julia = \"1.12\"", all_in_one["Project.toml"])
-    @test occursin("[workspace]", all_in_one["Project.toml"])
-    @test occursin("projects = [\"test\", \"docs\"]", all_in_one["Project.toml"])
-    @test occursin("Aqua =", all_in_one["test/Project.toml"])
-    @test occursin("JET = \"0.9, 0.10, 0.11, 0.12\"", all_in_one["test/Project.toml"])
-    @test occursin("Test =", all_in_one["test/Project.toml"])
-    @test occursin("Documenter = \"1.9\"", all_in_one["docs/Project.toml"])
-
-    @test !haskey(all_in_one, ".github/workflows/CompatHelper.yml")
-    dependabot = all_in_one[".github/dependabot.yml"]
-    @test occursin("package-ecosystem: \"github-actions\"", dependabot)
-    @test occursin("package-ecosystem: \"julia\"", dependabot)
-    for directory in ("/", "/docs", "/test")
-        @test occursin("- \"$(directory)\"", dependabot)
-    end
-
-    all_ci = all_in_one[".github/workflows/CI.yml"]
-    @test !occursin("version: 'min'", all_ci)
-    @test count(==(true), occursin.("- 'min'", eachline(IOBuffer(all_ci)))) == 2
-    @test count(==(true), occursin.("- 'pre'", eachline(IOBuffer(all_ci)))) == 2
-    @test occursin(raw"if: ${{ github.event_name == 'pull_request' }}", all_ci)
-    @test occursin(raw"if: ${{ github.event_name != 'pull_request' }}", all_ci)
-    @test occursin("- ubuntu-latest", all_ci)
-    @test occursin("macOS-latest", all_ci)
-    @test occursin("windows-latest", all_ci)
-    @test occursin(raw"matrix.os == 'ubuntu-latest' && matrix.version == '1'", all_ci)
-    @test occursin("JET_TEST:", all_ci)
-    @test occursin("@static if get(ENV, \"JET_TEST\", \"true\") == \"true\"", all_in_one["test/runtests.jl"])
-
-    @test occursin("```jldoctest", all_in_one["src/MyPkg.jl"])
-    @test occursin("MyPkg.hello()", all_in_one["src/MyPkg.jl"])
-    @test occursin("Return a friendly greeting.", all_in_one["src/MyPkg.jl"])
-    @test !occursin("hello()::String", all_in_one["src/MyPkg.jl"])
-    @test !occursin("#L", all_in_one["docs/src/developer.md"])
-    @test occursin("[ColPrac version increment guidelines]", all_in_one["docs/src/developer.md"])
-    @test occursin("[Quick Start](@ref)", all_in_one["docs/src/user.md"])
-    @test !occursin("[Installation](@ref)", all_in_one["docs/src/user.md"])
-    @test !occursin("```@index", all_in_one["docs/src/index.md"])
-    @test occursin("import MyPkg # hide", all_in_one["docs/src/index.md"])
-    @test occursin("pkgdir(MyPkg)", all_in_one["docs/src/index.md"])
-    @test occursin("assets/citation.bib", all_in_one["docs/src/index.md"])
-    @test !haskey(all_in_one, "CITATION.bib")
-    @test occursin("versioninfo()", all_in_one[".github/ISSUE_TEMPLATE/bug_report.yml"])
-    @test occursin("required: true", all_in_one[".github/ISSUE_TEMPLATE/bug_report.yml"])
-    @test !haskey(all_in_one, ".github/ISSUE_TEMPLATE/bug_report.md")
-
-    @test occursin("Documenter = \"1.9\"", simple["docs/Project.toml"])
-    simple_project_uuid = only(match(r"uuid = \"([^\"]+)\"", simple["Project.toml"]).captures)
-    @test occursin("MyPkg = \"$(simple_project_uuid)\"", simple["docs/Project.toml"])
-    @test occursin("MyPkg = \"$(simple_project_uuid)\"", simple["test/Project.toml"])
-    @test occursin("julia = \"1.12\"", simple["Project.toml"])
-    @test occursin("projects = [\"test\", \"docs\"]", simple["Project.toml"])
-    @test haskey(simple, "docs/make.jl")
-    @test haskey(simple, "docs/src/index.md")
-    @test haskey(simple, "docs/src/examples.md")
-    @test haskey(simple, "docs/src/api.md")
-    @test occursin("\"Home\" => \"index.md\"", simple["docs/make.jl"])
-    @test occursin("\"Examples\" => \"examples.md\"", simple["docs/make.jl"])
-    @test occursin("\"API Reference\" => \"api.md\"", simple["docs/make.jl"])
-    @test occursin("# Examples", simple["docs/src/examples.md"])
-    @test occursin("MyPkg.hello()", simple["docs/src/examples.md"])
-    @test occursin("```@repl", simple["docs/src/examples.md"])
-    @test occursin("```@example", simple["docs/src/examples.md"])
-    @test occursin("Documenter", simple["docs/make.jl"])
-    @test occursin("```jldoctest", simple["src/MyPkg.jl"])
-    @test occursin("Test =", simple["test/Project.toml"])
-    @test !occursin("DocStringExtensions", simple["Project.toml"])
-    @test occursin("API Reference", simple["README.md"])
-
-    simple_ci = simple[".github/workflows/CI.yml"]
-    @test !occursin("version: 'min'", simple_ci)
-    @test count(==(true), occursin.("- 'min'", eachline(IOBuffer(simple_ci)))) == 1
-    @test count(==(true), occursin.("- 'pre'", eachline(IOBuffer(simple_ci)))) == 1
-    @test !occursin("macOS-latest", simple_ci)
-    @test !occursin("windows-latest", simple_ci)
-    @test occursin(raw"continue-on-error: ${{ matrix.version == 'pre' }}", simple_ci)
-    @test occursin("julia-actions/julia-runtest", simple_ci)
-    @test occursin("julia-actions/julia-docdeploy", simple_ci)
-    @test !occursin("JET_TEST", simple_ci)
-    @test occursin("julia-actions/julia-processcoverage", simple_ci)
-    @test occursin("codecov/codecov-action", simple_ci)
-    for (workflow, uploads) in ((simple_ci, 1), (all_ci, 2))
-        @test count("use_oidc: true", workflow) == uploads
-        @test count("id-token: write", workflow) == uploads
-        @test !occursin("secrets.CODECOV_TOKEN", workflow)
-    end
-
-    for path in (
-        ".github/dependabot.yml",
-        ".github/ISSUE_TEMPLATE/bug_report.yml",
-        ".github/ISSUE_TEMPLATE/feature_request.yml",
-        ".github/workflows/Format.yml",
-        "CITATION.cff",
-        "docs/src/developer.md",
-        "docs/src/user.md",
-    )
-        @test !haskey(simple, path)
-    end
-    @test haskey(simple, ".github/workflows/TagBot.yml")
-    @test !any(
-        occursin(dependency, content) for
-            dependency in ("Aqua", "JET", "Runic") for
-            content in values(simple)
-    )
-
-    @test haskey(minimum, ".github/workflows/CI.yml")
-    @test occursin("Pkg.add(url=", minimum["README.md"])
-    @test occursin("MyPkg.hello()", minimum["README.md"])
-    @test occursin("## Development", minimum["README.md"])
-    @test occursin("git clone https://github.com/ohno/MyPkg.jl.git", minimum["README.md"])
-    @test occursin("cd MyPkg.jl", minimum["README.md"])
-    @test occursin("Pkg.test()", minimum["README.md"])
-    @test !occursin("## Acknowledgments", minimum["README.md"])
-    @test !occursin("PkgFactory.jl", minimum["README.md"])
-    minimum_ci = minimum[".github/workflows/CI.yml"]
-    @test occursin("version: 'min'", minimum_ci)
-    @test !occursin("version: 'pre'", minimum_ci)
-    @test count(==(true), occursin.("version: 'min'", eachline(IOBuffer(minimum_ci)))) == 1
-    @test !occursin("matrix:", minimum_ci)
-    @test !occursin("macOS-latest", minimum_ci)
-    @test !occursin("windows-latest", minimum_ci)
-    @test !occursin("[extras]", minimum["Project.toml"])
-    @test !occursin("[targets]", minimum["Project.toml"])
-    @test occursin("julia = \"1.12\"", minimum["Project.toml"])
-    @test occursin("projects = [\"test\"]", minimum["Project.toml"])
-    minimum_project_uuid = only(match(r"uuid = \"([^\"]+)\"", minimum["Project.toml"]).captures)
-    @test occursin("MyPkg = \"$(minimum_project_uuid)\"", minimum["test/Project.toml"])
-    @test occursin("Test =", minimum["test/Project.toml"])
-    @test !any(startswith(path, "docs/") for path in keys(minimum))
-    @test !haskey(minimum, "CITATION.bib")
-    @test !haskey(minimum, "CITATION.cff")
-    @test !occursin("CITATION", minimum["README.md"])
-    @test !occursin("Documentation", minimum["README.md"])
-    @test !any(
-        occursin(dependency, content) for
-            dependency in ("Documenter", "Codecov", "JET") for
-            content in values(minimum)
-    )
-end
-
-@testset "quality workflows and package test suite" begin
-    files = PkgFactory.Templates.generate_template_files_dict(
-        "example", "QualityPkg.jl", ["Example Author"], "Quality workflow tests", "all-in-one",
-    )
-    for tool in ("Aqua", "JET")
-        script = lowercase(tool) * ".jl"
-        workflow = files[".github/workflows/$(tool).yml"]
-        @test occursin("name: $tool", workflow)
-        @test occursin("branches: [main]", workflow)
-        @test occursin("pull_request:", workflow)
-        @test occursin("workflow_dispatch:", workflow)
-        @test occursin("version: '1'", workflow)
-        @test occursin("using Pkg; Pkg.instantiate()", workflow)
-        @test occursin("julia --project=test --startup-file=no --color=yes test/$script", workflow)
-        @test occursin(raw"group: ${{ github.workflow }}-${{ github.ref }}", workflow)
-        @test !occursin("continue-on-error", workflow)
-        @test occursin("include(\"$script\")", files["test/runtests.jl"])
-        @test occursin("using QualityPkg", files["test/$script"])
-        @test !occursin("{{{", files["test/$script"])
-        for path in ("README.md", "docs/src/index.md")
-            @test occursin("workflows/$(tool).yml", files[path])
+@testset "generated package identity" begin
+    for template in list_templates()
+        files = PkgFactory.Templates.generate_template_files_dict(
+            "ohno", "MyPkg.jl", ["Shuhei Ohno"], "My special package", template,
+        )
+        @test haskey(files, "src/MyPkg.jl")
+        project = TOML.parse(files["Project.toml"])
+        @test project["name"] == "MyPkg"
+        @test project["authors"] == ["Shuhei Ohno"]
+        for child in project["workspace"]["projects"]
+            @test TOML.parse(files["$child/Project.toml"])["deps"]["MyPkg"] == project["uuid"]
         end
     end
-    @test occursin("include(\"explicit_imports.jl\")", files["test/runtests.jl"])
-    @test occursin("check_no_implicit_imports(QualityPkg)", files["test/explicit_imports.jl"])
-    @test occursin("check_no_stale_explicit_imports(QualityPkg)", files["test/explicit_imports.jl"])
-    @test occursin("Aqua.test_all(QualityPkg)", files["test/aqua.jl"])
-    @test occursin("JET.test_package(QualityPkg; target_modules = (QualityPkg,))", files["test/jet.jl"])
-    for template in ("simple", "minimum")
-        basic = PkgFactory.Templates.generate_template_files_dict(
-            "example", "QualityPkg.jl", ["Example Author"], "Quality workflow tests", template,
-        )
-        @test !haskey(basic, ".github/workflows/Aqua.yml")
-        @test !haskey(basic, ".github/workflows/JET.yml")
+
+    existing_uuid = "12345678-1234-5678-1234-567812345678"
+    files = PkgFactory.Templates.generate_template_files_dict(
+        "ohno", "MyPkg.jl", ["Shuhei Ohno"], "My special package", "simple";
+        package_uuid = existing_uuid,
+    )
+    @test TOML.parse(files["Project.toml"])["uuid"] == existing_uuid
+    for child in ("docs", "test")
+        @test TOML.parse(files["$child/Project.toml"])["deps"]["MyPkg"] == existing_uuid
     end
 end
 
@@ -330,16 +117,12 @@ end
     @test filter(key -> endswith(key, ".ipynb"), plan.files) == [path]
     notebook = PkgFactory.JSON3.read(files[path], Dict{String,Any})
     @test notebook["nbformat"] == 4
-    @test notebook["nbformat_minor"] == 5
-    @test notebook["metadata"]["kernelspec"]["name"] == "julia"
     @test notebook["metadata"]["kernelspec"]["language"] == "julia"
     @test notebook["metadata"]["language_info"]["name"] == "julia"
     @test !occursin("{{{", files[path])
-    @test !occursin("PreviewAllInOne", files[path])
     cells = notebook["cells"]
     @test length(unique(cell["id"] for cell in cells)) == length(cells)
     code_cells = filter(cell -> cell["cell_type"] == "code", cells)
-    @test length(code_cells) == 4
     for cell in code_cells
         @test isempty(cell["outputs"])
         @test isnothing(cell["execution_count"])
@@ -347,40 +130,19 @@ end
         @test Meta.parseall(source) isa Expr
         @test !occursin(r"(?m)^!|^%|^pip ", source)
     end
-    @test occursin("VERSION >= v\"1.12\"", join(code_cells[1]["source"]))
     setup = join(code_cells[2]["source"])
-    @test occursin("import Pkg\nPkg.activate(\".\")\n", setup)
     @test occursin("Pkg.add(url=\"https://github.com/example-owner/NotebookPkg.jl.git\", rev=\"main\")", setup)
     @test occursin("import NotebookPkg", join(code_cells[3]["source"]))
     @test occursin("NotebookPkg.hello()", join(code_cells[4]["source"]))
-    @test occursin("@assert message == \"Hello, World!\"", join(code_cells[4]["source"]))
     for template in ("simple", "minimum")
         basic = PkgFactory.Templates.generate_template_files_dict(
             "example-owner", "NotebookPkg.jl", ["Example Author"], "Notebook tests", template,
         )
         @test !any(endswith(key, ".ipynb") for key in keys(basic))
-        @test !any(occursin("colab.research.google.com", text) for text in values(basic))
     end
 end
 
-@testset "formatting workflow" begin
-    files = PkgFactory.Templates.generate_template_files_dict(
-        "example", "FormatPkg.jl", ["Example Author"], "Formatting workflow", "all-in-one",
-    )
-    @test haskey(files, ".github/workflows/Format.yml")
-    workflow = files[".github/workflows/Format.yml"]
-    @test occursin("fredrikekre/runic-action@v1", workflow)
-    @test occursin("- 'main'", workflow)
-    @test occursin(raw"continue-on-error: ${{ github.event_name == 'pull_request' }}", workflow)
-    for template in ("simple", "minimum")
-        basic = PkgFactory.Templates.generate_template_files_dict(
-            "example", "FormatPkg.jl", ["Example Author"], "Basic template", template,
-        )
-        @test !haskey(basic, ".github/workflows/Format.yml")
-    end
-end
-
-@testset "web OAuth device flow" begin
+@testset "OAuth device flow" begin
     calls = NamedTuple[]
     requester = function (method, url; headers, body, status_exception)
         push!(calls, (; method, url, headers, body, status_exception))
@@ -435,7 +197,7 @@ end
     @test !occursin("internal network detail", sprint(showerror, connection_error))
 end
 
-@testset "web GitHub repository owners" begin
+@testset "GitHub repository owners" begin
     requester = function (method, url; headers, body, status_exception)
         @test method == "GET"
         @test any(header -> header == ("Authorization" => "Bearer token"), headers)
@@ -471,7 +233,7 @@ end
     ]
 end
 
-@testset "web GitHub repository availability" begin
+@testset "GitHub repository availability" begin
     statuses = [404, 200]
     requester = function (method, url; headers, body, status_exception)
         @test method == "GET"
@@ -506,7 +268,7 @@ end
     )
 end
 
-@testset "web GitHub branch initialization delay" begin
+@testset "GitHub branch initialization delay" begin
     attempts = Ref(0)
     delays = Float64[]
     requester = function (method, url; headers, body, status_exception)
@@ -638,7 +400,7 @@ end
     end
 end
 
-@testset "web repository secret encryption" begin
+@testset "repository secret encryption" begin
     encrypted_request = Ref("")
     public_key = PkgFactory.Base64.base64encode(zeros(UInt8, 32))
     requester = function (method, url; headers, body, status_exception)

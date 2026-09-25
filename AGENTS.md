@@ -4,7 +4,7 @@
 
 - PkgFactory.jl generates new Julia packages from templates and bootstraps their GitHub repositories.
 - The package name is `PkgFactory` (see Project.toml) regardless of the repository directory name.
-- Julia 1.10+ (see `[compat]` in `Project.toml`). Check `.github/workflows/CI.yml` for the versions and platforms actually tested; template CI workflows describe generated packages, not PkgFactory itself.
+- Julia 1.12+ (see `[compat]` in `Project.toml`). Check `.github/workflows/CI.yml` for the versions and platforms actually tested; template CI workflows describe generated packages, not PkgFactory itself.
 
 ## Commands
 
@@ -23,7 +23,7 @@ julia --project=. --startup-file=no -e 'using Pkg; Pkg.test()'
 Generate documentation:
 
 ```sh
-julia --project=docs --startup-file=no -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();'
+julia --project=docs --startup-file=no -e 'import Pkg; Pkg.instantiate()'
 julia --project=docs --startup-file=no docs/make.jl
 ```
 
@@ -41,8 +41,8 @@ julia --project=. --startup-file=no -i -e 'using PkgFactory'
 - Applications in `apps/cli`, `apps/web`, and `apps/mcp` depend only on the core,
   never on each other. Shared settings, defaults, validation and creation belong
   in `PackageSpec`, `package_schema`, `plan_package` and `create_package`.
-- Initialize application environments with `julia --startup-file=no scripts/setup.jl`.
-  Use Julia 1.12 for all apps; core/CLI/Web also support Julia 1.10+.
+- Initialize each application with `julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.instantiate()'`.
+  The core and all applications require Julia 1.12+.
 - Test each application with `julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.test()'`.
 - Keep each app's Manifest committed with a relative `../..` core dependency.
 - Web assets belong in `apps/web/public/`. MCP supports stdio and Streamable HTTP.

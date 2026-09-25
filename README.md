@@ -40,12 +40,13 @@ visibility before executing a plan. Optional secrets belong in
 
 ## Applications
 
-From a checkout, install dependencies using Julia 1.12 (required by the MCP SDK
-and its workspace). The core, CLI and Web support Julia 1.10+; on older Julia
-versions run `scripts/setup.jl cli web` to resolve compatible manifests.
+The core and all applications require Julia 1.12 or later. From a checkout,
+instantiate the applications you want to run:
 
 ```sh
-julia --startup-file=no scripts/setup.jl
+julia --project=apps/cli --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia --project=apps/web --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia --project=apps/mcp --startup-file=no -e 'import Pkg; Pkg.instantiate()'
 julia --project=apps/cli --startup-file=no apps/cli/bin/pkgfactory.jl
 julia --project=apps/web --startup-file=no apps/web/bin/pkgfactory-web.jl
 julia --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl

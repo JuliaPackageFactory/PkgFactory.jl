@@ -2,6 +2,9 @@ name = "PkgFactoryWeb"
 uuid = "6b871f74-41e6-4e17-98c6-d7c8e20b2ea8"
 version = "0.1.0"
 
+[workspace]
+projects = ["test"]
+
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
@@ -17,10 +20,4 @@ DocStringExtensions = "0.9"
 HTTP = "1.11"
 JSON3 = "1"
 PkgFactory = "0.0.5"
-julia = "1.10"
-
-[extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Test"]
+julia = "1.12"

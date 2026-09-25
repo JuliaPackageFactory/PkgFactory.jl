@@ -1,6 +1,7 @@
 [deps]
 Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
 Bibliography = "f1be7e48-bf82-45af-a471-ae754a193061"
+PkgFactory = "f5938637-db80-4a7e-b041-f9483a1b56a7"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"

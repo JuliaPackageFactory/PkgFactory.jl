@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   generate:
-    name: ${{ matrix.package }}.jl
+    name: 本体（E2E） - ${{ matrix.package }}.jl
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 60

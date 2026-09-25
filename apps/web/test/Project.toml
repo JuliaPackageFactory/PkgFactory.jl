@@ -1,0 +1,4 @@
+[deps]
+PkgFactory = "f5938637-db80-4a7e-b041-f9483a1b56a7"
+PkgFactoryWeb = "6b871f74-41e6-4e17-98c6-d7c8e20b2ea8"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

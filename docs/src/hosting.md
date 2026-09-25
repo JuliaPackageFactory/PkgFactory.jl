@@ -5,7 +5,7 @@ in the Authorization header. The server does not persist access tokens. Closing
 the tab clears its copy; it does not revoke the GitHub OAuth grant. No Auth0 or
 credential database is required for this deployment model.
 
-Run `julia --startup-file=no scripts/setup.jl web` from the repository root,
+Run `julia --project=apps/web --startup-file=no -e 'import Pkg; Pkg.instantiate()'` from the repository root,
 then use `julia --project=apps/web` for the commands below. Static assets are
 self-contained under `apps/web/public/`.
 

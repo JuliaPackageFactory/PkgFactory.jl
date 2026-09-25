@@ -5,12 +5,21 @@ This page describes how to develop PkgFactory.jl locally (tests, docs, and commo
 Generate Documentation:
 
 ```sh
-julia --project=docs --startup-file=no -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate();'
+julia --project=docs --startup-file=no -e 'import Pkg; Pkg.instantiate()'
 julia --project=docs --startup-file=no -e 'include("docs/make.jl")'
 ```
 
-Application environments are independent. Run `julia scripts/setup.jl` with Julia
-1.12 to initialize all three, then run `Pkg.test()` under each `apps/*` project.
+The core and applications require Julia 1.12+. The root workspace includes
+`test` and `docs`; each application has a separate workspace containing its own
+`test` project and a committed Manifest. Applications resolve the local core
+through `[sources]`. They are not members of the root workspace.
+
+For each application, run these commands with `APP` set to `cli`, `web`, or `mcp`:
+
+```sh
+julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.test()'
+```
 All package settings, defaults and creation behavior belong in the core. Apps
 may translate input, manage authentication and present results, but must not
 implement a second creation engine.
