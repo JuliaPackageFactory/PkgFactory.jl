@@ -6,40 +6,36 @@
 [![Build Status](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl)
 
-PkgFactory creates a Julia package and its GitHub repository from a template,
-including tests and GitHub Actions. Choose `minimum` for a small starting point,
-`simple` for documentation and coverage, or `all-in-one` for additional quality
-checks and maintenance tools.
+This package automates the process from creating a repository to deploying [templates](https://github.com/JuliaPackageFactory/PkgFactory.jl/tree/main/templates).
 
 ## Quick Start
 
-Install Julia 1.12 or later and Git. Documentation deploy keys are generated
-using OpenSSH bundled by Julia's `OpenSSH_jll` dependency, installed automatically
-with PkgFactory. No separate OpenSSH installation or PATH configuration is needed
-for the core, CLI, Web UI, or MCP server.
-
-Run these commands in a terminal:
-
+For raw API:
 ```sh
 git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
 cd PkgFactory.jl
-julia --project=apps/web --startup-file=no -e 'import Pkg; Pkg.instantiate()'
-julia --project=apps/web --startup-file=no apps/web/bin/pkgfactory-web.jl
+julia +1.12 --project=. --startup-file=no ...
 ```
 
-Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/), connect your GitHub
-account, and enter the repository owner, package name, and authors. Choose a
-template and visibility, then click **Generate & commit package**. The result
-links to your new repository.
+For CLI:
+```sh
+git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
+cd PkgFactory.jl
+...
+```
 
-See the [User Guide](docs/src/user.md) for template details, package settings,
-and what to do after creation.
+For Web UI:
+```sh
+git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
+cd PkgFactory.jl
+julia +1.12 --project=apps/web --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia +1.12 --project=apps/web --startup-file=no apps/web/bin/pkgfactory-web.jl
+```
 
-## Other ways to use PkgFactory
-
-- [Terminal](docs/src/user.md#terminal-interface): answer prompts or pass command-line options.
-- [Julia and notebooks](docs/src/user.md#julia-and-notebooks): preview files and create a repository from a script.
-- [MCP](apps/mcp/README.md): create packages from an MCP client.
+For MCP:
+```sh
+...
+```
 
 ## Documentation
 
