@@ -10,21 +10,6 @@ This package automates the process from creating a repository to deploying [temp
 
 ## Quick Start
 
-With Juliaup and Git installed, add Julia 1.12:
-
-```sh
-juliaup add 1.12
-```
-
-For raw API:
-
-```sh
-git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
-cd PkgFactory.jl
-julia +1.12 --project=. --startup-file=no -e 'import Pkg; Pkg.instantiate()'
-julia +1.12 --project=. --startup-file=no
-```
-
 For CLI:
 
 ```sh
