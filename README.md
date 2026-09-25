@@ -45,4 +45,3 @@ and what to do after creation.
 - [API Reference](https://juliapackagefactory.github.io/PkgFactory.jl/dev/api/)
 - [Web UI Hosting](docs/src/hosting.md)
 - [Developer Guide](docs/src/developer.md)
-- [Updating older scripts](docs/src/migration.md)

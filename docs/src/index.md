@@ -47,4 +47,3 @@ On later runs, start it with the last command above from the same directory.
 - [API Reference](api.md): function documentation.
 - [Web UI Hosting](hosting.md): run a shared service.
 - [Developer Guide](developer.md): contribute to PkgFactory.
-- [Updating older scripts](migration.md): replacements for earlier entry points.

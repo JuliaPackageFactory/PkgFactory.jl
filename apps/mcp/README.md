@@ -122,7 +122,7 @@ serve_http(
 ```
 
 The application implements `github_backend_for` and returns a
-`PkgFactory.GitHubAPI` holding that user's GitHub credential. HTTP does not
+`PkgFactory.Credential` holding that user's GitHub token. HTTP does not
 implicitly fall back to the server's environment token. Plan access is tied to
 the verified identity. Account linking and a durable credential/operation store
 are application responsibilities; the current package keeps plans in memory.
@@ -137,21 +137,18 @@ Tests cover protocol discovery, configuration validation, plan execution,
 duplicate calls, user isolation, expiration, error redaction, real stdio, and
 real HTTP authentication. GitHub-changing operations use a mock backend.
 
+See the [Developer Guide](../../docs/src/developer.md) for the repository layout
+and shared development workflow. Package validation, defaults, template
+generation, creation, and recovery are provided by the local core. The MCP plan
+store handles caller identity, expiration, and duplicate tool calls.
+
+Streamable HTTP uses the [MCP SDK](https://github.com/JuliaSMLM/ModelContextProtocol.jl)
+and the [standard transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
+
 ## Acknowledgments
 
 Generated from the `minimum` template of
 [PkgFactory.jl](https://github.com/JuliaPackageFactory/PkgFactory.jl). MIT licensed.
 
-## Monorepo migration
-
 This application was imported from JuliaPackageFactory/PkgFactoryMCP.jl
 at commit `0b16c0d106607e8dbdf47b4245a1d50189eb60a2` (MIT license retained).
-Run commands from the monorepo root after
-`julia --project=apps/mcp --startup-file=no -e 'import Pkg; Pkg.instantiate()'`. Package
-validation, defaults, template generation, creation and recovery are provided
-by the local core. Defaults are now `all-in-one/public`; pass
-`template="minimum", visibility="private"` explicitly to keep the former choice.
-The MCP plan store handles caller identity, expiration and duplicate tool calls.
-
-Streamable HTTP uses the [MCP SDK](https://github.com/JuliaSMLM/ModelContextProtocol.jl)
-and the [standard transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).

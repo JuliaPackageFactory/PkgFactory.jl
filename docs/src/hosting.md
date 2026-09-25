@@ -95,8 +95,6 @@ caller's GitHub Bearer token. Its state is one of:
 
 For the user-facing recovery steps and required settings, see
 [Resuming an interrupted setup](user.md#Resuming-an-interrupted-setup).
-API callers using the legacy optional Codecov token must provide it again when
-resuming because it is never retained in the marker or service.
 
 Documenter recovery installs a new public/private key pair and updates the Secret
 before deleting older keys titled `PkgFactory Documenter ...`. Other deploy keys
