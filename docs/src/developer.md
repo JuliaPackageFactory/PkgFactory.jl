@@ -1,36 +1,57 @@
 # Developer Guide
 
-This page describes how to develop PkgFactory.jl locally (tests, docs, and common maintenance tasks). For feature requests or behavior changes, please open an Issue first to discuss motivation, use-cases, and compatibility. Once we agree on the direction, PRs are welcome.
+This page covers contributing to PkgFactory itself. To work on a generated
+package, see the [User Guide](user.md). For feature requests or behavior changes,
+open an issue to discuss the use case and compatibility before submitting a PR.
 
-Generate Documentation:
+## Repository layout
 
-```sh
-julia --project=docs --startup-file=no -e 'import Pkg; Pkg.instantiate()'
-julia --project=docs --startup-file=no -e 'include("docs/make.jl")'
-```
+`src/` provides package settings, validation, template rendering, planning,
+creation, and recovery. The applications in `apps/cli`, `apps/web`, and `apps/mcp`
+depend on this library and do not depend on each other. Templates live in
+`templates/`; browser assets live in `apps/web/public/`.
+
+Keep shared behavior in `PackageSpec`, `package_schema`, `plan_package`, and
+`create_package`. Applications collect input, manage authentication, and present
+results. The core accepts explicit credentials and does not prompt for input,
+read environment variables, serve routes, or register MCP tools.
 
 The core and applications require Julia 1.12+. The root workspace includes
 `test` and `docs`; each application has a separate workspace containing its own
 `test` project and a committed Manifest. Applications resolve the local core
 through `[sources]`. They are not members of the root workspace.
 
-For each application, run these commands with `APP` set to `cli`, `web`, or `mcp`:
+## Running tests
+
+Run commands from the repository root. Install dependencies and test the core:
+
+```sh
+julia --project=. --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia --project=. --startup-file=no -e 'import Pkg; Pkg.test()'
+```
+
+For each application, replace `APP` with `cli`, `web`, or `mcp`:
 
 ```sh
 julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.instantiate()'
 julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.test()'
 ```
-All package settings, defaults and creation behavior belong in the core. Apps
-may translate input, manage authentication and present results, but must not
-implement a second creation engine.
 
-Run Tests:
+Default tests use simulated GitHub responses and local transports. They do not
+create GitHub repositories. Browser input tests also run with
+`node apps/web/test/browser.cjs`.
+
+## Building documentation
 
 ```sh
-julia --project=. --startup-file=no -e 'using Pkg; Pkg.test()'
+julia --project=docs --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia --project=docs --startup-file=no docs/build.jl
 ```
 
-Dependency Maintenance:
+The local build writes to `docs/build/`. CI uses `docs/make.jl`, which also
+calls `deploydocs`.
+
+## Dependency maintenance
 
 ```sh
 julia --project=. -e 'import Pkg; Pkg.update()'
@@ -38,13 +59,11 @@ julia --project=. -e 'import Pkg; Pkg.resolve()'
 julia --project=. -e 'import Pkg; Pkg.instantiate()'
 ```
 
-Development REPL:
+## Development REPL
 
 ```sh
 julia --project=. --startup-file=no -i -e 'using PkgFactory'
 ```
-
-Default tests use test doubles and temporary local Git repositories. They do not write to GitHub.
 
 ## Documentation deployment
 
@@ -103,34 +122,6 @@ Simple and AllInOne upload coverage using GitHub OIDC. No `CODECOV_TOKEN` secret
 is needed in the template repositories. Sign in to Codecov and give its GitHub
 App access to both repositories. Coverage is uploaded by their own CI workflows;
 the PkgFactory E2E workflow does not upload coverage on their behalf.
-
-OAuth Device Flow Sequence Diagram:
-
-```mermaid
-sequenceDiagram
-  autonumber
-  participant UI as UI (CLI or Web)
-  participant App as PkgFactory.jl
-  participant GitHub as GitHub Rest API & Web
-
-  %% get device code
-  UI->>App: call core API
-  App->>GitHub: POST /login/device/code (device_flow_begin)
-  GitHub-->>App: device_code
-  App-->>UI: device_code
-
-  %% get access token
-  UI->>GitHub: visit website (copy & paste device_code)
-  GitHub-->>UI: redirect (or go back by hand)
-  UI->>App: call core API
-  App->>GitHub: POST /login/oauth/access_token (device_flow_poll)
-  GitHub-->>App: access_token
-  App-->>UI: access_token
-
-  %% create repo using access token
-  UI->>App: call core API
-  App->>GitHub: create_repo, etc.
-```
 
 ## Template design choices
 

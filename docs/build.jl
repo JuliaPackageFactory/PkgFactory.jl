@@ -15,8 +15,10 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Developer Guide" => "developer.md",
-        "Web UI Hosting" => "hosting.md",
+        "User Guide" => "user.md",
         "API Reference" => "api.md",
+        "Web UI Hosting" => "hosting.md",
+        "Developer Guide" => "developer.md",
+        "Updating Older Scripts" => "migration.md",
     ],
 )

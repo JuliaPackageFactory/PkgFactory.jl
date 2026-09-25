@@ -1,5 +1,8 @@
 # Hosting the Web UI
 
+To create a package on your own machine, use the [Quick Start](index.md#Quick-Start).
+This guide covers running a shared Web UI behind HTTPS.
+
 The Web UI uses each visitor's GitHub token, held in their browser tab and sent
 in the Authorization header. The server does not persist access tokens. Closing
 the tab clears its copy; it does not revoke the GitHub OAuth grant. No Auth0 or
@@ -79,7 +82,7 @@ not a test of GitHub availability.
 
 The core commits `.pkgfactory.json` atomically with the generated template. It
 contains a settings fingerprint, Project.toml digest and operation state, with
-no credentials. `PkgFactory.preview` includes this additional file in its plan.
+no credentials. `plan_package` includes this additional file in its plan.
 The final successful step records `complete` in a separate commit.
 
 `POST /api/github/repository-status` takes `owner` and `package_name` plus the
@@ -90,18 +93,10 @@ caller's GitHub Bearer token. Its state is one of:
 - `files_committed`: the template commit is recorded; later setup may still be running or have failed.
 - `complete`: the operation recorded completion. This is not a live audit of CI or later repository edits.
 
-After a failed creation the UI checks this status without automatically retrying.
-Resume requires the original owner, package, authors, description, template,
-visibility and commit message, plus an unchanged Project.toml. Completed matching
-operations return without further writes. The bundled templates use OIDC for
-Codecov, so no coverage token is needed when creating or resuming a package.
+For the user-facing recovery steps and required settings, see
+[Resuming an interrupted setup](user.md#Resuming-an-interrupted-setup).
 API callers using the legacy optional Codecov token must provide it again when
 resuming because it is never retained in the marker or service.
-
-Repositories made by older versions, or failures after repository creation but
-before the template commit, have no marker. Inspect these manually; do not simply
-select Resume. The server does not delete repositories, adopt arbitrary existing
-repositories or roll back GitHub changes automatically.
 
 Documenter recovery installs a new public/private key pair and updates the Secret
 before deleting older keys titled `PkgFactory Documenter ...`. Other deploy keys
@@ -114,6 +109,3 @@ Check two accounts concurrently, revoked authorization, GitHub throttling, lost
 responses and a restart during creation. Measure peak memory before selecting the
 VPS size. Unit tests use a simulated GitHub service; local HTTP tests exercise
 request limits and caller isolation without creating real repositories.
-
-Build these docs locally without deployment using `julia --project=docs docs/build.jl`.
-`docs/make.jl` is the CI entry point that also calls `deploydocs`.
