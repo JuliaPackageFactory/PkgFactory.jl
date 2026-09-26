@@ -19,6 +19,8 @@ Julia 1.12 or later.
 | `apps/web/` | Web server and browser assets under `public/` |
 | `apps/mcp/` | MCP server with stdio and Streamable HTTP transports |
 | `templates/` | Generated package presets |
+| `apps/shared/` | Optional Cloudflare application adapters |
+| `deploy/cloudflare/` | Workers, Containers, OAuth, durable application state, and deployment instructions |
 | `test/` | Core tests and template repository test helpers |
 | `docs/` | This documentation |
 

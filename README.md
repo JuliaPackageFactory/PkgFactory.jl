@@ -45,4 +45,5 @@ julia +1.12 --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl 
 - [Notebook example](examples/PkgFactory.ipynb)
 - [MCP guide](apps/mcp/README.md)
 - [Web UI Hosting](docs/src/hosting.md)
+- [Cloudflare deployment](deploy/cloudflare/README.md)
 - [Developer Guide](docs/src/developer.md)

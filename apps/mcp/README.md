@@ -7,6 +7,9 @@ Create Julia package repositories from an AI application using
 [ModelContextProtocol.jl](https://github.com/JuliaSMLM/ModelContextProtocol.jl).
 Requires Julia 1.12 or newer. Supports stdio and authenticated Streamable HTTP.
 
+For multi-user OAuth and durable plans on Cloudflare Workers + Containers, see
+the [Cloudflare deployment guide](../../deploy/cloudflare/README.md).
+
 ## Quick start
 
 Clone the repository and instantiate its project. The pinned `[sources]` entries

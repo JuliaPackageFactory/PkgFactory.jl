@@ -1,0 +1,22 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "pkgfactory-web",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "PUBLIC_ORIGIN": "https://pkgfactory-web.YOUR_SUBDOMAIN.workers.dev",
+    "MCP_ORIGIN": "https://pkgfactory-mcp.YOUR_SUBDOMAIN.workers.dev",
+    "GITHUB_OAUTH_CLIENT_ID": "YOUR_WEB_GITHUB_OAUTH_CLIENT_ID"
+  },
+  "assets": { "directory": "../../../apps/web/public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "containers": [{ "class_name": "WebContainer", "image": "Dockerfile", "image_build_context": "../../..",
+    "instance_type": "basic", "max_instances": 1 }],
+  "durable_objects": { "bindings": [{ "name": "WEB_CONTAINER", "class_name": "WebContainer" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WebContainer"] }],
+  "ratelimits": [{ "name": "EDGE_LIMIT", "namespace_id": "2104", "simple": { "limit": 120, "period": 60 } }],
+  "limits": { "cpu_ms": 100 },
+  "observability": { "enabled": false }
+}

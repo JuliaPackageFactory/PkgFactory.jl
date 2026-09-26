@@ -1,0 +1,43 @@
+name: Cloudflare
+on:
+  pull_request:
+    paths: ['deploy/cloudflare/**', 'apps/**', 'src/**', 'templates/**', 'Project.toml', '.dockerignore', '.github/workflows/Cloudflare.yml']
+  push:
+    branches: [main]
+    paths: ['deploy/cloudflare/**', 'apps/**', 'src/**', 'templates/**', 'Project.toml', '.dockerignore', '.github/workflows/Cloudflare.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  workers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: deploy/cloudflare
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: deploy/cloudflare/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run check
+        env:
+          WRANGLER_SEND_METRICS: 'false'
+  containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web, mcp]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build Julia container
+        run: docker build --platform linux/amd64 -f deploy/cloudflare/${{ matrix.app }}/Dockerfile -t pkgfactory-${{ matrix.app }}:cloudflare .
+      - name: Exercise all templates with 1 GiB and no swap
+        run: node deploy/cloudflare/scripts/profile.js ${{ matrix.app }}

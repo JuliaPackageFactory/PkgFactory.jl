@@ -16,6 +16,38 @@ struct PackagePlan
         new(spec, "$(spec.owner)/$(_normalize_repo_name(spec.name))",
             Tuple(sort!(collect(files); by=first)), fingerprint)
     end
+    # Restore trusted application storage without rendering a new UUID or date.
+    function PackagePlan(spec::PackageSpec, files::Dict{String,String})
+        all(path -> !isempty(path) && !startswith(path, "/") &&
+            !occursin('\\', path) && !occursin(':', path) &&
+            all(part -> part ∉ ("", ".", ".."), split(path, '/')), keys(files)) ||
+            throw(InputError("Invalid saved plan paths."))
+        haskey(files, "Project.toml") && haskey(files, MARKER_PATH) ||
+            throw(InputError("Saved plan is incomplete."))
+        fingerprint = _fingerprint(spec.owner, _normalize_repo_name(spec.name), collect(spec.authors),
+            spec.description, spec.template, spec.visibility, spec.commit_message)
+        marker = JSON3.read(files[MARKER_PATH], Dict{String,Any})
+        get(marker, "fingerprint", nothing) == fingerprint &&
+            get(marker, "state", nothing) == "files_committed" &&
+            get(marker, "project_sha256", nothing) == bytes2hex(SHA.sha256(files["Project.toml"])) ||
+            throw(InputError("Saved plan does not match its settings."))
+        new(spec, "$(spec.owner)/$(_normalize_repo_name(spec.name))",
+            Tuple(sort!(collect(files); by=first)), fingerprint)
+    end
+end
+
+"""Encode the exact rendered plan for trusted application storage, without credentials."""
+function plan_snapshot(plan::PackagePlan)
+    spec = plan.spec
+    settings = Dict{String,Any}(String(key) => getfield(spec, key) for key in fieldnames(PackageSpec))
+    settings["authors"] = collect(spec.authors)
+    Dict("version" => 1, "spec" => settings, "files" => Dict(plan.contents))
+end
+
+"""Restore a snapshot from trusted storage. Never accept snapshots from API clients."""
+function restore_plan(snapshot::AbstractDict)
+    get(snapshot, "version", nothing) == 1 || throw(InputError("Unsupported saved plan version."))
+    PackagePlan(package_spec(snapshot["spec"]), Dict{String,String}(snapshot["files"]))
 end
 
 """Validate settings and render a package once, without credentials or side effects."""

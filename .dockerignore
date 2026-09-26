@@ -1,0 +1,7 @@
+.git
+.wrangler
+**/node_modules
+**/.wrangler
+**/.dev.vars*
+**/.env*
+docs/build

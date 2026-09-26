@@ -9,6 +9,7 @@ export build_server, serve_stdio, serve_http, operator_auth, main
 
 include("server.jl")
 include("auth.jl")
+include("cloudflare.jl")
 include("cli.jl")
 
 end

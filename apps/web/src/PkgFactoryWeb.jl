@@ -76,6 +76,7 @@ function handle_request(
     key_generator = PkgFactory._generate_keys,
     policy = DEFAULT_POLICY,
     client_ip = "local",
+    creator = PkgFactory.create_package,
 )
     method, path = _route(request)
     try
@@ -161,7 +162,7 @@ function handle_request(
             spec = PkgFactory.package_spec(body)
             plan = PkgFactory.plan_package(spec)
             credential = PkgFactory.Credential(access_token; codecov_token=get(body, "codecov_token", ""))
-            result = PkgFactory.create_package(credential, plan; requester, key_generator)
+            result = creator(credential, plan; requester, key_generator)
             return _json_response(201, result)
         end
         return _json_response(404, Dict("error" => "Not found."))
@@ -189,12 +190,14 @@ function start(
     trusted_proxies = String[],
     client_id::String = get(ENV, "GITHUB_OAUTH_CLIENT_ID", PkgFactory.GITHUB_OAUTH_CLIENT_ID),
     requester = PkgFactory.GitHubTransport(),
+    creator = PkgFactory.create_package,
+    proxy_token::AbstractString = "",
 )
     @info "PkgFactory Web UI is available at http://$(host):$(port)/"
     policy = WebPolicy(; public_origin, max_body_bytes)
-    handler = (request; kwargs...) -> handle_request(request; client_id, requester, kwargs...)
+    handler = (request; kwargs...) -> handle_request(request; client_id, requester, creator, kwargs...)
     return HTTP.serve!(
-        stream -> _serve_stream(stream, policy, handler, trusted_proxies),
+        stream -> _serve_stream(stream, policy, handler, trusted_proxies; proxy_token),
         String(host),
         Int(port);
         verbose = verbose,

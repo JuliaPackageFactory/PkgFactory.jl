@@ -10,3 +10,11 @@
 .ipynb_checkpoints/
 
 !apps/*/Manifest.toml
+
+# Cloudflare local tooling and secrets
+node_modules/
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

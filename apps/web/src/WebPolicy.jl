@@ -82,7 +82,7 @@ function _error_response(err)
     return _json_response(500, Dict("error" => "An internal error occurred. Check repository status before retrying."))
 end
 
-function _serve_stream(stream, policy, handler, trusted_proxies)
+function _serve_stream(stream, policy, handler, trusted_proxies; proxy_token="")
     request = stream.message
     request_id = string(PkgFactory.UUIDs.uuid4())
     started = time_ns()
@@ -90,9 +90,13 @@ function _serve_stream(stream, policy, handler, trusted_proxies)
     # X-Real-IP is used only for an explicitly trusted immediate peer. That
     # proxy must overwrite the header and the backend must not be public.
     forwarded = HTTP.header(request, "X-Real-IP", "")
-    client_ip = peer in trusted_proxies && 0 < ncodeunits(forwarded) <= 64 &&
+    provided = HTTP.header(request, "X-PkgFactory-Proxy", "")
+    gateway = !isempty(proxy_token) && length(provided) == length(proxy_token) &&
+        PkgFactory.SHA.sha256(provided) == PkgFactory.SHA.sha256(proxy_token)
+    client_ip = (gateway || peer in trusted_proxies) && 0 < ncodeunits(forwarded) <= 64 &&
         occursin(r"^[0-9a-fA-F:.]+$", forwarded) ? forwarded : peer
     response = try
+        isempty(proxy_token) || gateway || throw(RequestError(403, "Gateway authentication is required."))
         declared = tryparse(Int, HTTP.header(request, "Content-Length", "0"))
         isnothing(declared) || 0 <= declared <= policy.max_body_bytes ||
             throw(RequestError(413, "Request body is too large."))

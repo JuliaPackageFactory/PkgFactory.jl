@@ -66,6 +66,14 @@ end
 function package_config(args)
     PkgFactory.package_spec(args)
 end
+function save_plan!(store::PlanStore, id, plan, who)
+    lock(store.mutex) do
+        now = store.clock()
+        filter!(pair -> pair.second.status == :running || pair.second.expires > now, store.records)
+        length(store.records) < store.capacity || fail("capacity_exceeded", "Plan storage is full. Try again after plans expire.")
+        store.records[id] = PlanRecord(plan, who, now + store.ttl, :pending, nothing)
+    end
+end
 function preview_package(store, args, who)
     config = package_config(args)
     plan = try
@@ -76,22 +84,15 @@ function preview_package(store, args, who)
         fail("invalid_configuration", err isa PkgFactory.InputError ? err.message : "PkgFactory rejected the configuration.")
     end
     id = string(uuid4())
-    lock(store.mutex) do
-        now = store.clock()
-        filter!(pair -> pair.second.status == :running || pair.second.expires > now, store.records)
-        length(store.records) < store.capacity || fail("capacity_exceeded", "Plan storage is full. Try again after plans expire.")
-        store.records[id] = PlanRecord(plan, who, now + store.ttl, :pending, nothing)
-    end
+    save_plan!(store, id, plan, who)
     Dict{String,Any}("plan_id" => id, "expires_in_seconds" => store.ttl,
         "repository" => plan.repository, "template" => config.template,
         "visibility" => config.visibility, "authors" => collect(config.authors),
         "description" => config.description, "files" => copy(plan.files),
         "operation" => config.resume ? "resume" : "create", "changes_made" => false)
 end
-function create_package(store, args, who, ctx, backend_resolver, creator)
-    check_keys(args, ["plan_id"], ["plan_id"])
-    id = string_arg(args, "plan_id"; limit=100)
-    record, cached = lock(store.mutex) do
+function claim_plan!(store::PlanStore, id, who)
+    lock(store.mutex) do
         record = get(store.records, id, nothing)
         (isnothing(record) || record.principal != who) && fail("plan_not_found", "Plan not found. Call preview_package first.")
         record.status == :running && fail("operation_in_progress", "This plan is already being executed.")
@@ -101,6 +102,17 @@ function create_package(store, args, who, ctx, backend_resolver, creator)
         record.status = :running
         (record, nothing)
     end
+end
+function finish_plan!(store::PlanStore, id, record, status, result=nothing)
+    lock(store.mutex) do
+        record.result = result
+        record.status = status
+    end
+end
+function create_package(store, args, who, ctx, backend_resolver, creator)
+    check_keys(args, ["plan_id"], ["plan_id"])
+    id = string_arg(args, "plan_id"; limit=100)
+    record, cached = claim_plan!(store, id, who)
     isnothing(cached) || return cached
     result = try
         backend = backend_resolver(ctx)
@@ -108,18 +120,13 @@ function create_package(store, args, who, ctx, backend_resolver, creator)
         raw = creator(record.plan; backend=backend)
         merge(Dict{String,Any}(raw), Dict("plan_id" => id))
     catch err
-        lock(store.mutex) do
-            record.status = :failed
-        end
+        finish_plan!(store, id, record, :failed)
         err isa InterruptException && rethrow()
         err isa PkgFactory.InputError && rethrow()
         err isa PkgFactory.CreationError && rethrow()
         fail("creation_failed", "Creation failed and may have changed GitHub. Check server-side GitHub authentication and the repository, then preview an explicit resume if needed.")
     end
-    lock(store.mutex) do
-        record.result = result
-        record.status = :complete
-    end
+    finish_plan!(store, id, record, :complete, result)
     deepcopy(result)
 end
 config_schema() = PkgFactory.package_schema()
@@ -134,8 +141,8 @@ when a stdio client requests creation. Plans are bounded and process-local.
 """
 function build_server(; backend_resolver=ctx -> environment_credential(), enable_create=true,
     require_identity=false, plan_ttl=900.0, max_plans=256, clock=time,
-    creator=(plan; backend) -> PkgFactory.create_package(backend, plan))
-    store = PlanStore(; ttl=plan_ttl, capacity=max_plans, clock=clock)
+    creator=(plan; backend) -> PkgFactory.create_package(backend, plan), plan_store=nothing)
+    store = isnothing(plan_store) ? PlanStore(; ttl=plan_ttl, capacity=max_plans, clock=clock) : plan_store
     read_annotations = Dict{String,Any}("readOnlyHint" => true, "openWorldHint" => false)
     tools = MCP.MCPTool[
         MCP.MCPTool(name="list_templates", description="List available PkgFactory templates. No GitHub access or changes.",

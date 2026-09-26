@@ -158,3 +158,22 @@ end
 
 include(joinpath(@__DIR__, "..", "..", "..", "test", "fixtures", "github.jl"))
 include("creation.jl")
+
+@testset "Cloudflare private Web endpoint requires the gateway credential" begin
+    sockets = WU.Sockets
+    listener = sockets.listen(sockets.IPv4("127.0.0.1"), 0)
+    port = Int(sockets.getsockname(listener)[2])
+    close(listener)
+    secret = repeat("gateway-test-", 5)
+    server = WU.start("127.0.0.1", port; proxy_token=secret,
+        requester=(args...; kwargs...) -> error("GitHub must not be called"))
+    try
+        url = "http://127.0.0.1:$port/api/config"
+        @test WA.HTTP.get(url; status_exception=false).status == 403
+        @test WA.HTTP.get(url, ["X-PkgFactory-Proxy" => "forged", "X-Real-IP" => "127.0.0.1"];
+            status_exception=false).status == 403
+        @test WA.HTTP.get(url, ["X-PkgFactory-Proxy" => secret]).status == 200
+    finally
+        close(server)
+    end
+end

@@ -4,7 +4,7 @@ module PkgFactory
 import Base64, Dates, DocStringExtensions, HTTP, JSON3, SHA, Sodium, URIs, UUIDs
 import OpenSSH_jll: ssh_keygen
 
-export PackageSpec, PackagePlan, Credential, plan_package, create_package,
+export PackageSpec, PackagePlan, Credential, plan_package, plan_snapshot, restore_plan, create_package,
     package_spec, package_schema, list_templates, repository_status,
     repository_availability, get_repository_owners, device_flow_begin, device_flow_poll,
     PkgFactoryError, InputError, CreationError, GitHubAPIError, GitHubTransport

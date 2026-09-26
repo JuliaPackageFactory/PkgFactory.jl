@@ -1,0 +1,18 @@
+{
+  "name": "pkgfactory-cloudflare",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "wrangler deploy --dry-run --containers-rollout=none --config mcp/wrangler.jsonc && wrangler deploy --dry-run --containers-rollout=none --config web/wrangler.jsonc",
+    "test:integration": "node --test test/integration/*.test.js",
+    "deploy:mcp": "wrangler deploy --config mcp/wrangler.jsonc",
+    "deploy:web": "wrangler deploy --config web/wrangler.jsonc"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "0.3.7",
+    "@cloudflare/workers-oauth-provider": "1.1.0"
+  },
+  "devDependencies": { "wrangler": "4.141.0", "esbuild": "0.28.1", "miniflare": "5.20260925.0-alpha" }
+}

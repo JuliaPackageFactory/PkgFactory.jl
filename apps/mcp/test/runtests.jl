@@ -169,3 +169,4 @@ include("transports.jl")
 
 include(joinpath(@__DIR__, "..", "..", "..", "test", "fixtures", "github.jl"))
 include("creation.jl")
+include("cloudflare.jl")

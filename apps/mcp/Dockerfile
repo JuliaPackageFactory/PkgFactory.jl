@@ -8,6 +8,7 @@ COPY Project.toml ./
 COPY src ./src
 COPY templates ./templates
 COPY apps/mcp ./apps/mcp
+COPY apps/shared ./apps/shared
 RUN julia --project=apps/mcp --startup-file=no -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
 RUN useradd --create-home --uid 10001 mcp \
     && chown -R mcp:mcp /app /opt/julia-depot

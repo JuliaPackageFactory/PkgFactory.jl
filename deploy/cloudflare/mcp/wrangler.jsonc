@@ -1,0 +1,28 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "pkgfactory-mcp",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-26",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "vars": {
+    "MCP_ORIGIN": "https://pkgfactory-mcp.YOUR_SUBDOMAIN.workers.dev",
+    "GITHUB_OAUTH_CLIENT_ID": "YOUR_MCP_GITHUB_OAUTH_CLIENT_ID"
+  },
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "REPLACE_WITH_OAUTH_KV_ID" }],
+  "containers": [{ "class_name": "McpContainer", "image": "Dockerfile", "image_build_context": "../../..",
+    "instance_type": "basic", "max_instances": 1 }],
+  "durable_objects": { "bindings": [
+    { "name": "MCP_CONTAINER", "class_name": "McpContainer" },
+    { "name": "APPLICATION_STATE", "class_name": "ApplicationState" }
+  ] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["McpContainer", "ApplicationState"] }],
+  "ratelimits": [
+    { "name": "EDGE_LIMIT", "namespace_id": "2101", "simple": { "limit": 120, "period": 60 } },
+    { "name": "AUTH_LIMIT", "namespace_id": "2102", "simple": { "limit": 10, "period": 60 } },
+    { "name": "USER_LIMIT", "namespace_id": "2103", "simple": { "limit": 60, "period": 60 } }
+  ],
+  "limits": { "cpu_ms": 100 },
+  "observability": { "enabled": false }
+}
