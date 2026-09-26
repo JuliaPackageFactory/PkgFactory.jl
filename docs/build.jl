@@ -18,6 +18,7 @@ makedocs(;
         "User Guide" => "user.md",
         "API Reference" => "api.md",
         "Web UI Hosting" => "hosting.md",
+        "Authentication Design" => "authentication-design.md",
         "Developer Guide" => [
             "Development Workflow" => "developer.md",
             "Template Design" => "developer/templates.md",
