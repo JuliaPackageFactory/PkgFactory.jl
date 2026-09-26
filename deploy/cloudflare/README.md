@@ -126,6 +126,10 @@ Julia. Exercise tool discovery/Web configuration to check container readiness.
 The initial request can take longer while Julia loads; container readiness waits
 up to 120 seconds. The images use `--compile=min --heap-size-hint=600M` to reduce
 Julia's startup compilation and leave memory for native code and subprocesses.
+Package caches are built with `JULIA_CPU_TARGET=generic`, so a different CPU on
+Cloudflare can reuse them without recompiling at startup. The container profile
+first loads the application with `--cpu-target=generic --compiled-modules=strict`
+to verify that the shipped caches work without generating replacements.
 
 ## Persistence, failures, and recovery
 

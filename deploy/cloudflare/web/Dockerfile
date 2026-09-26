@@ -1,6 +1,6 @@
 FROM julia:1.12.3-bookworm
 WORKDIR /app
-ENV JULIA_DEPOT_PATH=/opt/julia-depot JULIA_NUM_THREADS=1
+ENV JULIA_DEPOT_PATH=/opt/julia-depot JULIA_NUM_THREADS=1 JULIA_CPU_TARGET=generic
 COPY Project.toml ./
 COPY src ./src
 COPY templates ./templates
