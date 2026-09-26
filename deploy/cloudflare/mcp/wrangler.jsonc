@@ -7,8 +7,8 @@
   "workers_dev": true,
   "preview_urls": false,
   "vars": {
-    "MCP_ORIGIN": "https://pkgfactory-mcp.ohno-github.workers.dev",
-    "WEB_ORIGIN": "https://pkgfactory-web.ohno-github.workers.dev",
+    "MCP_ORIGIN": "https://pkgfactory-mcp.ohnolab.workers.dev",
+    "WEB_ORIGIN": "https://pkgfactory-web.ohnolab.workers.dev",
     "MCP_ALLOWED_ORIGINS": [],
     "GITHUB_OAUTH_CLIENT_ID": "Ov23liM3Uu67r7XHOSNA"
   },

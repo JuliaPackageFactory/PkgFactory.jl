@@ -30,8 +30,8 @@ an empty Containers dashboard before that deployment is expected.
 
 | App | Homepage | Callback | Required settings |
 | --- | --- | --- | --- |
-| Web | `https://pkgfactory-web.ohno-github.workers.dev` | Same URL | Enable Device Flow; copy Client ID |
-| MCP | `https://pkgfactory-mcp.ohno-github.workers.dev` | `https://pkgfactory-mcp.ohno-github.workers.dev/callback` | Copy Client ID and Client Secret |
+| Web | `https://pkgfactory-web.ohnolab.workers.dev` | Same URL | Enable Device Flow; copy Client ID |
+| MCP | `https://pkgfactory-mcp.ohnolab.workers.dev` | `https://pkgfactory-mcp.ohnolab.workers.dev/callback` | Copy Client ID and Client Secret |
 
 Use your final hostnames in these settings. The Web app needs no OAuth client
 secret. The MCP app requests `repo`, `workflow`, and `read:user`. Each user grants
@@ -62,7 +62,7 @@ Update the committed Wrangler files with **non-secret** values:
 - Each `GITHUB_OAUTH_CLIENT_ID`: its respective OAuth App Client ID.
 - MCP `kv_namespaces[0].id`: the namespace ID returned above.
 
-The configured hostnames use the existing `ohno-github.workers.dev` subdomain.
+The configured hostnames use the existing `ohnolab.workers.dev` subdomain.
 The OAuth KV namespace and both GitHub OAuth App Client IDs are configured for
 that account. To deploy to another account, create its own KV namespace and
 OAuth Apps, then update the namespace ID, both origins and both Client IDs.
