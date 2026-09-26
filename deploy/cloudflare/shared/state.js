@@ -50,12 +50,15 @@ export async function stateAction(storage, action, data, now = Date.now()) {
       fail("invalid_plan");
     if (new TextEncoder().encode(JSON.stringify(data.snapshot)).length > 100000) fail("plan_too_large");
     const plans = await storage.list({ prefix: "plan:", limit: 257 });
-    let retained = 0;
+    let retained = 0, owned = 0;
     for (const [oldKey, old] of plans) {
       if (old.status !== "running" && old.expires <= now) await storage.delete(oldKey);
-      else retained++;
+      else {
+        retained++;
+        if (samePrincipal(old.principal, data.principal)) owned++;
+      }
     }
-    if (retained >= 256) fail("capacity_exceeded");
+    if (retained >= 256 || owned >= 16) fail("capacity_exceeded");
     record = { principal: data.principal, snapshot: data.snapshot,
       expires: now + data.ttl * 1000, status: "pending" };
     await storage.put(key, record);

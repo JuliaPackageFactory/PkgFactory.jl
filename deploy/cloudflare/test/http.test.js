@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { forwardedHeaders, origin, readBody, sameSecret, ticket } from "../shared/http.js";
+import { forwardedHeaders, origin, readBody, requireDistinctSecrets, sameSecret, ticket } from "../shared/http.js";
 
 test("gateway tickets are signed, short-lived, and keep users separate", async () => {
   const secret = "a".repeat(64);
@@ -24,6 +24,14 @@ test("forwarding removes spoofed identity, IP, session and cookie headers", () =
   for (const name of ["x-pkgfactory-proxy", "x-real-ip", "x-forwarded-for", "cookie", "mcp-session-id"])
     assert.equal(headers.has(name), false);
   assert.equal(headers.get("Authorization"), "Bearer legitimate");
+});
+
+test("missing or reused service secrets fail closed", () => {
+  const secret = "a".repeat(64);
+  assert.throws(() => requireDistinctSecrets(secret, undefined));
+  assert.throws(() => requireDistinctSecrets(secret, "short"));
+  assert.throws(() => requireDistinctSecrets(secret, secret));
+  assert.doesNotThrow(() => requireDistinctSecrets(secret, "b".repeat(64)));
 });
 
 test("chunked bodies cannot bypass the size limit", async () => {

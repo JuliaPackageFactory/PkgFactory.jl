@@ -38,6 +38,7 @@ function guarded(f)
         err isa InterruptException && rethrow()
         # HTTP exceptions can contain credentials; return only our own safe errors.
         code, message = err isa ToolError ? (err.code, err.message) :
+            err isa Cloudflare.StateError ? (err.code, err.message) :
             err isa PkgFactory.InputError ? ("invalid_configuration", err.message) :
             err isa PkgFactory.CreationError ? ("creation_failed", sprint(showerror, err)) :
             ("internal_error", "The operation failed. Inspect server configuration and try again.")
@@ -120,13 +121,25 @@ function create_package(store, args, who, ctx, backend_resolver, creator)
         raw = creator(record.plan; backend=backend)
         merge(Dict{String,Any}(raw), Dict("plan_id" => id))
     catch err
-        finish_plan!(store, id, record, :failed)
+        try
+            finish_plan!(store, id, record, :failed)
+        catch
+            @warn "Recording the failed plan was not confirmed; operator inspection may be required."
+        end
         err isa InterruptException && rethrow()
         err isa PkgFactory.InputError && rethrow()
         err isa PkgFactory.CreationError && rethrow()
+        err isa ToolError && rethrow()
+        err isa Cloudflare.StateError && rethrow()
         fail("creation_failed", "Creation failed and may have changed GitHub. Check server-side GitHub authentication and the repository, then preview an explicit resume if needed.")
     end
-    finish_plan!(store, id, record, :complete, result)
+    try
+        finish_plan!(store, id, record, :complete, result)
+    catch
+        @warn "Recording the completed plan was not confirmed; operator inspection may be required."
+        result = Cloudflare.with_warning(result, "plan_completion_record_failed",
+            "Creation completed, but saving its result was not confirmed. Do not repeat creation or make a new plan; ask the operator to inspect the saved plan and repository.")
+    end
     deepcopy(result)
 end
 config_schema() = PkgFactory.package_schema()

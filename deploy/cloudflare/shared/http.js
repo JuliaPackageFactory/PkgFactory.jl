@@ -37,6 +37,11 @@ export async function sameSecret(actual, expected) {
   return a.reduce((difference, byte, i) => difference | (byte ^ b[i]), 0) === 0;
 }
 
+export function requireDistinctSecrets(...secrets) {
+  if (secrets.some(value => typeof value !== "string" || new TextEncoder().encode(value).length < 32) ||
+      new Set(secrets).size !== secrets.length) throw new Error("Configure distinct secrets");
+}
+
 export async function ticket(secret, props, now = Date.now()) {
   if (typeof secret !== "string" || secret.length < 32 || !props.userId || !props.githubToken)
     throw new Error("Missing gateway credentials");

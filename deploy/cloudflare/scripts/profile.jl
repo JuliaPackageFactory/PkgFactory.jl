@@ -37,7 +37,8 @@ if app == "mcp"
     server = PkgFactoryMCP.build_server(; require_identity=true,
         backend_resolver=ctx -> PkgFactory.Credential("profile-token"),
         creator=(plan; backend) -> PkgFactory.create_package(backend, plan; requester=requester[]))
-    http = PkgFactoryMCP.serve_cloudflare(; origin="https://profile.invalid", secret, server)
+    http = PkgFactoryMCP.serve_cloudflare(; origin="https://profile.invalid",
+        ticket_secret=secret, state_secret=repeat("state", 16), server)
     function call_tool(name, arguments=Dict())
         payload = PkgFactory.Base64.base64encode(JSON3.write(Dict("aud" => "pkgfactory-container",
             "sub" => "profile", "github_token" => "profile-token", "exp" => time() + 120)))

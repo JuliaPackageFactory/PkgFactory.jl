@@ -47,5 +47,21 @@ vm.runInContext(readFileSync(join(__dirname, "../public/app.js"), "utf8"), conte
   element("#visibility").value = "public";
   vm.runInContext("applyPackageDefaults()", context);
   assert.equal(element("#visibility").value, "private");
+  element("#owner").value = "alice";
+  vm.runInContext('state.accessToken = "test-token"; state.owner = { login: "alice" }', context);
+  let creations = 0;
+  context.fetch = async path => ({ ok: true, json: async () => {
+    if (path === "/api/github/repository-availability") return { available: true, repository: "alice/Example.jl" };
+    assert.equal(path, "/api/packages");
+    creations++;
+    return { repository: "alice/Example.jl", url: "https://github.com/alice/Example.jl",
+      warnings: [{ code: "repository_lock_release_failed", message: "Creation completed. Ask the operator to inspect the lock." }] };
+  } });
+  await vm.runInContext("createPackage({ preventDefault() {} })", context);
+  assert.equal(vm.runInContext("state.creationStatus", context), "success");
+  assert.match(element("#success-copy").textContent, /Ask the operator to inspect the lock/);
+  assert.equal(element("#repository-link").href, "https://github.com/alice/Example.jl");
+  await vm.runInContext("createPackage({ preventDefault() {} })", context);
+  assert.equal(creations, 1);
   console.log("Browser schema defaults and input translation passed");
 })().catch((error) => { console.error(error); process.exitCode = 1; });

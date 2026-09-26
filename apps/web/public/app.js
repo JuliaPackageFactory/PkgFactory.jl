@@ -301,7 +301,8 @@ async function createPackage(event) {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    $("#success-copy").textContent = `${result.repository} is ready with its initial package structure and automation.`;
+    $("#success-copy").textContent = [`${result.repository} is ready with its initial package structure and automation.`,
+      ...(result.warnings || []).map(warning => warning.message)].join(" ");
     $("#repository-link").href = result.url;
     setCreationStatus("success");
   } catch (error) {

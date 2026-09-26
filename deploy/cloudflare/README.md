@@ -54,6 +54,11 @@ Update the committed Wrangler files with **non-secret** values:
 
 - Both `MCP_ORIGIN` values: the final MCP HTTPS origin, without a trailing slash.
 - Web `PUBLIC_ORIGIN`: the final Web HTTPS origin, without a trailing slash.
+- MCP `WEB_ORIGIN`: that same Web origin, used to verify maintenance for recovery.
+- MCP `MCP_ALLOWED_ORIGINS`: an array of exact browser client origins allowed to
+  call `/mcp` (for example `["http://localhost:6274"]` for a local Inspector).
+  The default empty array permits only the MCP site's own origin; clients without
+  an `Origin` header remain supported. Do not use wildcards.
 - Each `GITHUB_OAUTH_CLIENT_ID`: its respective OAuth App Client ID.
 - MCP `kv_namespaces[0].id`: the namespace ID returned above.
 
@@ -66,20 +71,43 @@ configuration, update these origins and GitHub callback settings, and disable
 `workers_dev`. Preview URLs are disabled so alternate origins cannot bypass the
 configured OAuth audience and browser origin.
 
-Generate one random secret of at least 32 bytes (for example 64 hexadecimal
-characters using a password manager). Register **the same value** in both Workers:
+Generate **five distinct random secrets**, each at least 32 bytes (for example
+64 hexadecimal characters using a password manager). Register them as follows;
+only `WEB_STATE_SECRET` has the same value in both Workers:
 
 ```sh
-npx wrangler secret put INTERNAL_SECRET --config mcp/wrangler.jsonc
-npx wrangler secret put INTERNAL_SECRET --config web/wrangler.jsonc
+npx wrangler secret put MCP_TICKET_SECRET --config mcp/wrangler.jsonc
+npx wrangler secret put MCP_STATE_SECRET --config mcp/wrangler.jsonc
+npx wrangler secret put WEB_STATE_SECRET --config mcp/wrangler.jsonc
+npx wrangler secret put WEB_STATE_SECRET --config web/wrangler.jsonc
+npx wrangler secret put WEB_PROXY_SECRET --config web/wrangler.jsonc
+npx wrangler secret put STATE_RECOVERY_SECRET --config mcp/wrangler.jsonc
 npx wrangler secret put GITHUB_OAUTH_CLIENT_SECRET --config mcp/wrangler.jsonc
 ```
 
 Wrangler prompts for the value; do not put secrets in command arguments, git,
-GitHub issue text, or chat. The internal secret authenticates container-to-state
-requests, Web gateway forwarding, and short-lived MCP gateway tickets. Rotating
-it requires updating and redeploying **both** applications so running containers
-receive the new value. Keep the value in a password manager for recovery.
+GitHub issue text, or chat. The keys grant separate permissions:
+
+| Secret | Purpose | Passed to container |
+| --- | --- | --- |
+| `MCP_TICKET_SECRET` | Sign/verify short-lived MCP tickets | MCP only |
+| `MCP_STATE_SECRET` | MCP plan storage and MCP repository locks | MCP only |
+| `WEB_STATE_SECRET` | Acquire/release Web repository locks only | Web only |
+| `WEB_PROXY_SECRET` | Authenticate Web gateway forwarding | Web only |
+| `STATE_RECOVERY_SECRET` | Operator recovery only | Neither |
+
+Web cannot claim MCP plans, release MCP-owned locks, or run recovery with either
+of its keys. Keep the recovery key in an operator password manager. Rotating a
+container key requires redeploying its application so the container receives the
+new value; rotating `WEB_STATE_SECRET` requires updating both Workers and the Web
+container.
+
+When upgrading from `INTERNAL_SECRET`, put both apps into maintenance first,
+let active operations finish, and stop both containers. Register the new keys,
+deploy both applications, verify their health, then leave maintenance mode.
+There is no fallback to the old shared key; remove it from both Workers after
+migration. Existing plans and locks stay in the same Durable Object. Recover
+any old stuck locks before admitting new operations.
 
 ```sh
 npm test
@@ -101,6 +129,11 @@ use Cloudflare account-scoped CI credentials instead of `wrangler login` and
 follow Cloudflare's [Containers deployment guide](https://developers.cloudflare.com/containers/guides/deploy-containers/).
 
 ## Verify the deployed service
+
+OAuth discovery, dynamic registration, and token endpoints accept browser CORS
+requests through the OAuth provider. `/mcp`, including preflights, validates
+`MCP_ALLOWED_ORIGINS`; consent and callback routes keep the same-origin policy
+and browser-bound CSRF checks. Bearer tokens are still required for MCP calls.
 
 1. Open the Web origin, sign in with GitHub, and check the owner/template list.
 2. Connect an OAuth-capable MCP client to `MCP_ORIGIN/mcp`. Discovery supports
@@ -138,7 +171,8 @@ and a five-minute idle timeout. No always-on keepalive is configured. Static Web
 requests and MCP OAuth discovery do not start Julia. Sleep and deployments clear
 container memory/disk, but not Durable Object storage.
 
-Plans live for 15 minutes, at most 256 retained plans, with a 100 KB snapshot
+Plans live for 15 minutes, at most 16 retained plans per authenticated principal
+and 256 across all users, with a 100 KB snapshot
 limit. Successful results remain available for 15 minutes after completion.
 Expired inactive plans are cleaned up when a new preview is stored. Failed
 plans cannot be retried; preview an explicit resume after inspecting GitHub.
@@ -149,13 +183,25 @@ prevents a slow or disconnected first request from writing concurrently with a
 retry. A crash, lost lock-release response, or state-service outage can leave a
 lock behind. No request automatically replays GitHub writes.
 
+Cleanup and plan-recording errors never replace a successful creation result or
+the original creation error. Successful responses retain the repository URL and
+may include `warnings`: `repository_lock_release_failed` means lock release was
+not confirmed; `plan_completion_record_failed` means the completed MCP result
+was not confirmed in storage. MCP keeps `isError: false`, and Web displays the
+warning beside its success result. Do not create again to clear either warning.
+Have the operator inspect GitHub and recover only if needed. A lost write response
+may mean the state was already saved; otherwise the running plan stays blocked.
+State errors such as `plan_expired`, `plan_not_found`, `operation_in_progress`,
+`operation_failed`, `capacity_exceeded`, and `repository_busy` retain distinct MCP
+codes. Transport or unrecognized state errors use `state_unavailable`.
+
 To recover a stuck operation:
 
 1. Set `MAINTENANCE = "true"` in the `vars` of **both** Wrangler files and deploy
    both Workers with `--containers-rollout=none`. New API requests now return 503.
 2. In the Cloudflare dashboard, stop both application containers and verify that
    they have fully stopped. A client timeout alone is not proof that work stopped.
-3. Inspect the target GitHub repository. Supply `MCP_ORIGIN` and `INTERNAL_SECRET`
+3. Inspect the target GitHub repository. Supply `MCP_ORIGIN` and `STATE_RECOVERY_SECRET`
    through your local environment, then run:
 
    ```sh
@@ -166,6 +212,12 @@ To recover a stuck operation:
    Remove maintenance mode and redeploy both Workers. Create a new preview with
    `resume: true` if GitHub shows a recoverable PkgFactory repository; otherwise
    resolve the partial state manually. Core recovery never adopts an unrelated repo.
+
+The recovery endpoint requires the operator key and checks MCP maintenance plus
+the Web gateway's `/api/health` maintenance response. Container shutdown is still
+an operator check: `--confirm-containers-stopped` is an explicit attestation, not
+a Cloudflare control-plane verification. Keep both apps in maintenance throughout
+recovery; a health response cannot prove that an earlier request stopped running.
 
 Do not delete the `ApplicationState` namespace or change its class/name during
 ordinary releases. That would discard plan history and repository exclusion.

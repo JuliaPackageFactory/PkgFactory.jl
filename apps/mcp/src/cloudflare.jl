@@ -66,8 +66,10 @@ end
 
 """Serve the private Container endpoint behind the authenticated Cloudflare Worker."""
 function serve_cloudflare(; origin=get(ENV, "MCP_ORIGIN", ""),
-    secret=get(ENV, "INTERNAL_SECRET", ""), host="0.0.0.0", port=8080, server=nothing)
-    client = Cloudflare.StateClient(origin, secret)
+    ticket_secret=get(ENV, "MCP_TICKET_SECRET", ""), state_secret=get(ENV, "MCP_STATE_SECRET", ""),
+    host="0.0.0.0", port=8080, server=nothing)
+    ncodeunits(ticket_secret) >= 32 || throw(ArgumentError("MCP_TICKET_SECRET must contain at least 32 bytes"))
+    client = Cloudflare.StateClient(origin, state_secret)
     server = isnothing(server) ? cloudflare_server(client) : server
     HTTP = PkgFactory.HTTP
     HTTP.serve!(String(host), Int(port); stream=true, readtimeout=60, max_connections=128) do stream
@@ -82,7 +84,7 @@ function serve_cloudflare(; origin=get(ENV, "MCP_ORIGIN", ""),
                 HTTP.Response(413)
             else
                 request.body = body
-                cloudflare_request(server, request, secret)
+                cloudflare_request(server, request, ticket_secret)
             end
         catch err
             err isa InterruptException && rethrow()

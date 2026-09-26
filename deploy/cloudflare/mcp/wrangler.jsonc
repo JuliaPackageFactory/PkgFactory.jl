@@ -8,6 +8,8 @@
   "preview_urls": false,
   "vars": {
     "MCP_ORIGIN": "https://pkgfactory-mcp.ohno-github.workers.dev",
+    "WEB_ORIGIN": "https://pkgfactory-web.ohno-github.workers.dev",
+    "MCP_ALLOWED_ORIGINS": [],
     "GITHUB_OAUTH_CLIENT_ID": "Ov23liM3Uu67r7XHOSNA"
   },
   "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "bdfe4308d992486b92aee45806c6c521" }],

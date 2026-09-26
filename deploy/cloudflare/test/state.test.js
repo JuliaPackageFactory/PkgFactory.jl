@@ -13,7 +13,7 @@ class Storage {
 }
 const principal = ["github", "123"];
 const snapshot = { version: 1, spec: { owner: "Alice", name: "Example" }, files: { "Project.toml": 'uuid = "saved-uuid"' } };
-const put = (s, id = "plan", now = 0) => stateAction(s, "plan_put", { id, principal, snapshot, ttl: 900 }, now);
+const put = (s, id = "plan", now = 0, who = principal) => stateAction(s, "plan_put", { id, principal: who, snapshot, ttl: 900 }, now);
 const claim = { id: "plan", principal, claim: "attempt" };
 
 test("a restart preserves the exact preview and cached result; another user cannot claim it", async () => {
@@ -38,8 +38,21 @@ test("expired/failed plans and bounded capacity fail without executing again", a
   await stateAction(s, "plan_claim", { ...claim, id: "replacement" }, 900003);
   await stateAction(s, "plan_finish", { ...claim, id: "replacement", status: "failed" }, 900004);
   await assert.rejects(stateAction(s, "plan_claim", { ...claim, id: "replacement" }, 900005), /operation_failed/);
-  for (let i = 0; i < 255; i++) await put(s, `p${i}`, 900006);
+  for (let i = 0; i < 255; i++) await put(s, `p${i}`, 900006, ["github", `user${i}`]);
   await assert.rejects(put(s, "overflow", 900007), /capacity_exceeded/);
+});
+
+test("one principal cannot exhaust global capacity; inactive expiry frees its quota", async () => {
+  const s = new Storage();
+  for (let i = 0; i < 16; i++) await put(s, `p${i}`);
+  await assert.rejects(put(s, "overflow"), /capacity_exceeded/);
+  await put(s, "bob", 0, ["github", "bob"]);
+  await stateAction(s, "plan_claim", { ...claim, id: "p0" }, 1);
+  await put(s, "after-expiry", 900001);
+  assert.equal((await s.get("plan:p0")).status, "running");
+  assert.equal(s.data.has("plan:p1"), false);
+  for (let i = 0; i < 14; i++) await put(s, `new${i}`, 900001);
+  await assert.rejects(put(s, "still-bounded", 900001), /capacity_exceeded/);
 });
 
 test("Web and MCP exclusion survives restarts and does not expire under a live writer", async () => {
