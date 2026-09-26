@@ -16,6 +16,12 @@ The existing local launchers and Render/Auth0 example remain available separatel
 
 ## Prerequisites the account owner supplies
 
+Use this existing project directly. The dashboard's
+`npm create cloudflare@latest -- --template=cloudflare/templates/containers-template`
+command creates a separate starter project and is not needed here. The first
+`wrangler deploy` builds/uploads the image and creates the Container application;
+an empty Containers dashboard before that deployment is expected.
+
 1. Enable **Workers Paid** on the Cloudflare account (USD 5/month minimum).
 2. Choose the account's `workers.dev` subdomain, or configure custom domains.
 3. Install Node.js 22+ and start Docker with Linux container support. Images must
@@ -24,8 +30,8 @@ The existing local launchers and Render/Auth0 example remain available separatel
 
 | App | Homepage | Callback | Required settings |
 | --- | --- | --- | --- |
-| Web | `https://pkgfactory-web.SUBDOMAIN.workers.dev` | Same URL | Enable Device Flow; copy Client ID |
-| MCP | `https://pkgfactory-mcp.SUBDOMAIN.workers.dev` | Homepage + `/callback` | Copy Client ID and Client Secret |
+| Web | `https://pkgfactory-web.ohno-github.workers.dev` | Same URL | Enable Device Flow; copy Client ID |
+| MCP | `https://pkgfactory-mcp.ohno-github.workers.dev` | `https://pkgfactory-mcp.ohno-github.workers.dev/callback` | Copy Client ID and Client Secret |
 
 Use your final hostnames in these settings. The Web app needs no OAuth client
 secret. The MCP app requests `repo`, `workflow`, and `read:user`. Each user grants
@@ -40,6 +46,7 @@ Run these commands from `deploy/cloudflare`:
 npm ci
 npx wrangler login
 npx wrangler whoami
+# Only for a different account without the configured OAuth namespace:
 npx wrangler kv namespace create OAUTH_KV --config mcp/wrangler.jsonc
 ```
 
@@ -50,7 +57,10 @@ Update the committed Wrangler files with **non-secret** values:
 - Each `GITHUB_OAUTH_CLIENT_ID`: its respective OAuth App Client ID.
 - MCP `kv_namespaces[0].id`: the namespace ID returned above.
 
-The example hostnames/IDs deliberately cannot be used as production values.
+The configured hostnames use the existing `ohno-github.workers.dev` subdomain.
+The OAuth KV namespace and both GitHub OAuth App Client IDs are configured for
+that account. To deploy to another account, create its own KV namespace and
+OAuth Apps, then update the namespace ID, both origins and both Client IDs.
 For custom domains, add a `routes` entry with `custom_domain: true` to each
 configuration, update these origins and GitHub callback settings, and disable
 `workers_dev`. Preview URLs are disabled so alternate origins cannot bypass the
