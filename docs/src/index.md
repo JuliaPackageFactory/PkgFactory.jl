@@ -44,7 +44,6 @@ On later runs, start it with the last command above from the same directory.
 ## More help
 
 - [User Guide](user.md): templates, settings, terminal commands, Julia examples, and recovery.
-- [MCP guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/tree/main/apps/mcp): connect an MCP client.
+- [Developer Guide](developer.md): development workflow, authentication design, templates, tests, and Web UI hosting.
 - [API Reference](api.md): function documentation.
-- [Web UI Hosting](hosting.md): run a shared service.
-- [Developer Guide](developer.md): contribute to PkgFactory.
+- [MCP guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/tree/main/apps/mcp): connect an MCP client.

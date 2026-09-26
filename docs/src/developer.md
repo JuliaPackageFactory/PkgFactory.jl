@@ -1,11 +1,13 @@
-# Developer Guide
+# Development Workflow
 
 This guide covers development of PkgFactory itself. To work on a generated
 package, see the [User Guide](user.md).
 
 - This page covers the repository layout, local tests, and documentation builds.
+- [Authentication Design](authentication-design.md) explains the current login flows, credential boundaries, and planned changes.
 - [Template Design](developer/templates.md) explains the presets and their design choices.
 - [Template Repository Tests](developer/template-tests.md) covers publishing and testing the generated examples on GitHub.
+- [Web UI Hosting](hosting.md) covers running the browser interface as a shared service.
 
 Run all commands from the repository root. The core and applications require
 Julia 1.12 or later.
