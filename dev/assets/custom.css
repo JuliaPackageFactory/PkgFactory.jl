@@ -2,3 +2,12 @@
 #documenter .docs-main header.docs-navbar .docs-right .docs-navbar-link .docs-label {
     display: none;
 }
+
+/* DocumenterMermaid uses the neutral theme, including on dark documentation pages. */
+.mermaid {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 6px;
+}
