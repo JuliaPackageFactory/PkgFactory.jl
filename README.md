@@ -6,7 +6,7 @@
 [![Build Status](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl)
 
-This package automates the process from creating a repository to deploying [templates](https://github.com/JuliaPackageFactory/PkgFactory.jl/tree/main/templates).
+PkgFactory.jl: A Julia package for automating repository creation and package infrastructure deployment
 
 ## Quick Start
 
