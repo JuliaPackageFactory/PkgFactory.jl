@@ -10,7 +10,7 @@ else
     using PkgFactoryWeb
 end
 import PkgFactory
-app == "web" && include("/app/apps/shared/Cloudflare.jl")
+app == "web" && include("/app/apps/shared/cloudflare.jl")
 const HTTP = PkgFactory.HTTP
 const JSON3 = PkgFactory.JSON3
 include("/fixtures/github.jl")

@@ -1,15 +1,11 @@
 """
 This module contains functions for verifying the package name and other inputs.
 """
-module Verifications
+module Verification
 
 # Packages
 
 import DocStringExtensions
-
-function hello()
-    return "Hello, Verifications.jl!"
-end
 
 # Functions
 
@@ -21,7 +17,7 @@ Usernames for user accounts on GitHub can only contain alphanumeric characters a
 $(DocStringExtensions.TYPEDSIGNATURES)
 
 ```
-PkgFactory.Verifications.verify_owner_name("ohno")
+PkgFactory.Verification.verify_owner_name("ohno")
 ```
 """
 function verify_owner_name(owner_name::String)
@@ -39,7 +35,7 @@ This function verifies the package name according to the [package naming rules](
 $(DocStringExtensions.TYPEDSIGNATURES)
 
 ```
-PkgFactory.Verifications.verify_package_name("MyPkg")
+PkgFactory.Verification.verify_package_name("MyPkg")
 ```
 """
 function verify_package_name(package_name::String)

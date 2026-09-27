@@ -21,7 +21,7 @@ function main()
         "TemplateAllInOne" => "all-in-one",
     )
     haskey(templates, name) || error("Unsupported E2E package: $name")
-    PkgFactory.Verifications.verify_owner_name(owner) == "OK" || error("Invalid E2E owner")
+    PkgFactory.Verification.verify_owner_name(owner) == "OK" || error("Invalid E2E owner")
     template = templates[name]
     repo = "$name.jl"
     full_name = "$owner/$repo"

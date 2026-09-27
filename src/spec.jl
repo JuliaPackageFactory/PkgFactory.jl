@@ -26,7 +26,7 @@ function _verify_inputs(
 )
     _validate_owner(owner_name)
     _bounded_text(repo_name, "package_name", 100)
-    package_check = Verifications.verify_package_name(_package_name(repo_name))
+    package_check = Verification.verify_package_name(_package_name(repo_name))
     package_check == "OK" || throw(InputError("Invalid package name."))
     1 <= length(author_names) <= 20 || throw(InputError("authors must contain 1 to 20 names."))
     foreach(author -> _bounded_text(author, "author", 200), author_names)

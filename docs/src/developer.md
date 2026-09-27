@@ -22,9 +22,35 @@ Julia 1.12 or later.
 | `apps/mcp/` | MCP server with stdio and Streamable HTTP transports |
 | `templates/` | Generated package presets |
 | `apps/shared/` | Optional Cloudflare application adapters |
-| `deploy/cloudflare/` | Workers, Containers, OAuth, durable application state, and deployment instructions |
+| `deploy/web/` | Web deployment definitions, grouped by hosting provider |
+| `deploy/mcp/` | MCP deployment definitions, grouped by hosting provider |
+| `deploy/shared/` | Hosting code shared by deployments |
+| `deploy/scripts/` | Deployment operations and profiling tools |
+| `deploy/test/` | Deployment unit and integration tests |
 | `test/` | Core tests and template repository test helpers |
 | `docs/` | This documentation |
+
+### Naming and ownership
+
+Julia package entrypoints match the package and module names in `Project.toml`:
+`PkgFactory.jl`, `PkgFactoryCLI.jl`, `PkgFactoryWeb.jl`, and `PkgFactoryMCP.jl`.
+All other Julia source files use lowercase `snake_case`, such as
+`verification.jl`, `policy.jl`, and `github/device_flow.jl`. Modules and types
+keep Julia's capitalized naming convention: `Verification`, `Templates`, and
+`WebPolicy`.
+
+Name files after their responsibility. Use singular or uncountable names for a
+single concept (`spec`, `plan`, `verification`) and plurals for collections
+(`templates`, `errors`). Executable launchers in `bin/` use lowercase command
+names with hyphens. Keep ecosystem filenames such as `Project.toml`,
+`Dockerfile`, and `README.md` in their standard form.
+
+Keep application implementations and launchers in `apps/<app>/`, and hosting
+definitions in `deploy/<app>/<provider>/`. Shared application adapters belong
+in `apps/shared/`; shared deployment code belongs in `deploy/shared/<provider>/`.
+Deployment scripts and tests follow the same provider grouping. See the
+[deployment guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/deploy/README.md)
+for the available targets and commands.
 
 Keep shared behavior in `PackageSpec`, `package_schema`, `plan_package`, and
 `create_package`. Applications collect input, manage authentication, and present
@@ -67,6 +93,19 @@ Default tests use simulated GitHub responses and local transports. They do not
 create GitHub repositories. Run browser input tests with
 `node apps/web/test/browser.cjs`. The separate
 [template repository tests](developer/template-tests.md) publish to GitHub.
+
+Test the Cloudflare deployment from its shared Node project:
+
+```sh
+cd deploy
+npm ci
+npm test
+npm run test:integration
+npm run check
+```
+
+Return to the repository root for the Julia commands below. `check` bundles
+both Workers without deploying them or building container images.
 
 The core tests also generate real RSA-4096 key pairs concurrently in a child Julia
 process with an empty PATH. They verify matching public/private keys, silent

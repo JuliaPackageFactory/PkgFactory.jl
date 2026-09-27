@@ -1,13 +1,17 @@
-# HTTPS hosting
+# MCP deployment on Render
 
-The package supports a local stdio process and an authenticated Streamable HTTP
-server at `/mcp`. It does not provision cloud accounts or issue OAuth tokens.
+This deployment runs the [MCP application](../../../apps/mcp/README.md) as an
+authenticated Streamable HTTP server at `/mcp`, with Auth0 providing OAuth.
+For multi-user GitHub OAuth and durable plans, see the
+[Cloudflare deployment](../../README.md).
 
 ## Render + Docker + Auth0
 
-The included `apps/mcp/render.yaml` (build context: monorepo root) deploys one Julia instance, with Render terminating
-HTTPS and forwarding HTTP to the container. Set up the service as a Docker web
-service using the Blueprint. The paid plan is a starting point; measure memory
+The included [Blueprint](render.yaml) uses [this Dockerfile](Dockerfile) with the
+repository root as its build context. It deploys one Julia instance, with Render
+terminating HTTPS and forwarding HTTP to the container. Set up the service as a
+Docker web service and select `deploy/mcp/render/render.yaml` as the Blueprint
+path. The paid plan is a starting point; measure memory
 and latency before adjusting it. The Blueprint uses a TCP readiness check
 because MCP endpoints require authentication.
 
@@ -37,9 +41,10 @@ Use `serve_http(auth=..., resource_metadata=..., backend_resolver=...,
 enable_create=true)`. The resolver receives `ctx.authenticated_user`; use its
 verified provider/subject to retrieve that user's GitHub credential. Plans are
 bound to this identity. A multi-user service additionally needs a GitHub OAuth
-account-linking flow and encrypted credential storage (PostgreSQL is the
-recommended persistent store). Those application services are not included in
-this package. Do not replace the resolver with one shared administrator token.
+account-linking flow and encrypted credential storage. Those services are not
+part of this Render example; the Cloudflare deployment implements them with
+per-user OAuth grants. Do not replace the resolver with one shared administrator
+token.
 
 ## Operations and recovery
 

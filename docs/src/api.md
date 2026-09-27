@@ -11,6 +11,6 @@ CurrentModule = PkgFactory
 Modules = [
     PkgFactory,
     PkgFactory.Templates,
-    PkgFactory.Verifications,
+    PkgFactory.Verification,
 ]
 ```

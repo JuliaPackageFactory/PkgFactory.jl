@@ -1,5 +1,5 @@
 import { AuthorizationError, CimdFetchError, OAuthError } from "@cloudflare/workers-oauth-provider";
-import { escapeHTML as e, json } from "../shared/http.js";
+import { escapeHTML as e, json } from "../../shared/cloudflare/http.js";
 
 export function consentPage(client, request, handle) {
   const host = new URL(request.redirectUri).hostname;

@@ -1,4 +1,4 @@
-include(joinpath(@__DIR__, "..", "..", "shared", "Cloudflare.jl"))
+include(joinpath(@__DIR__, "..", "..", "shared", "cloudflare.jl"))
 
 """Plan storage backed by the Cloudflare application's Durable Object."""
 struct CloudflarePlanStore

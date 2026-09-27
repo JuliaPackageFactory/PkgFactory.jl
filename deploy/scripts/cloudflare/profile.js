@@ -2,7 +2,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 const app = process.argv[2];
-if (!["web", "mcp"].includes(app)) throw new Error("Usage: node scripts/profile.js web|mcp");
+if (!["web", "mcp"].includes(app)) throw new Error("Usage: node deploy/scripts/cloudflare/profile.js web|mcp");
 const image = `pkgfactory-${app}:cloudflare`;
 const command = JSON.parse(execFileSync("docker", ["image", "inspect", image,
   "--format", "{{json .Config.Cmd}}"], { encoding: "utf8" }));

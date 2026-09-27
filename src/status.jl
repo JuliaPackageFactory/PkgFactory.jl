@@ -38,7 +38,7 @@ end
 function repository_status(token::AbstractString, owner::String, repo::String; requester=GitHubTransport())
     _validate_owner(owner)
     _bounded_text(repo, "package_name", 100)
-    Verifications.verify_package_name(_package_name(repo)) == "OK" || throw(InputError("Invalid package name."))
+    Verification.verify_package_name(_package_name(repo)) == "OK" || throw(InputError("Invalid package name."))
     repo = _normalize_repo_name(repo)
     _, status = _repository(token, owner, repo; requester)
     status == 404 && return Dict("repository" => "$owner/$repo", "state" => "not_found")

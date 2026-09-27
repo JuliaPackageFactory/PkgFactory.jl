@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { stateAction } from "../shared/state.js";
+import { stateAction } from "../../shared/cloudflare/state.js";
 
 class Storage {
   constructor(data = new Map()) { this.data = data; }

@@ -110,7 +110,7 @@ sequenceDiagram
     Worker-->>Client: MCP access token and refresh token
 ```
 
-The consent and callback handling lives in `deploy/cloudflare/mcp/oauth.js`;
+The consent and callback handling lives in `deploy/mcp/cloudflare/oauth.js`;
 `worker.js` configures the OAuth provider and forwards authenticated MCP calls.
 The GitHub request asks for `repo`, `workflow`, and `read:user`, and the callback
 requires `repo` and `workflow` before completing authorization. Refreshing an
@@ -152,7 +152,7 @@ tickets, `MCP_STATE_SECRET` grants MCP state access, `WEB_STATE_SECRET` grants
 only Web repository lock access, and `WEB_PROXY_SECRET` authenticates Web
 gateway forwarding. `STATE_RECOVERY_SECRET` is reserved for operator recovery
 and is passed to neither container. See the
-[Cloudflare deployment guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/deploy/cloudflare/README.md)
+[Cloudflare deployment guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/deploy/README.md)
 for configuration and rotation.
 
 ## Other MCP launchers

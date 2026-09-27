@@ -1,7 +1,7 @@
 # Hosting the Web UI
 
 For Workers Static Assets, Julia Containers, and an OAuth-enabled MCP server on
-Cloudflare, follow the [Cloudflare deployment guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/deploy/cloudflare/README.md).
+Cloudflare, follow the [Cloudflare deployment guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/deploy/README.md).
 That deployment includes durable MCP plans and repository exclusion across Web
 and MCP. The single-server guidance below describes the standalone launcher.
 

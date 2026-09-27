@@ -12,8 +12,6 @@ import PkgFactory: Templates
 const WEB_ROOT = normpath(joinpath(@__DIR__, "..", "public"))
 const LOGO_PATH = normpath(joinpath(WEB_ROOT, "assets", "logo.svg"))
 
-hello() = "Hello, WebUI.jl!"
-
 function _asset(name::String)::String
     path = normpath(joinpath(WEB_ROOT, name))
     startswith(path, WEB_ROOT) || error("Invalid asset path.")
@@ -61,7 +59,7 @@ function _route(request::HTTP.Request)::Tuple{String,String}
     return String(request.method), target
 end
 
-include("WebPolicy.jl")
+include("policy.jl")
 
 """
 $(DocStringExtensions.TYPEDSIGNATURES)

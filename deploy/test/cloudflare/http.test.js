@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { forwardedHeaders, origin, readBody, requireDistinctSecrets, sameSecret, ticket } from "../shared/http.js";
+import { forwardedHeaders, origin, readBody, requireDistinctSecrets, sameSecret, ticket } from "../../shared/cloudflare/http.js";
 
 test("gateway tickets are signed, short-lived, and keep users separate", async () => {
   const secret = "a".repeat(64);

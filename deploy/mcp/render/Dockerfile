@@ -1,9 +1,7 @@
-# Build from the monorepo root: docker build -f apps/mcp/Dockerfile .
+# Build from the monorepo root: docker build -f deploy/mcp/render/Dockerfile .
 FROM julia:1.12.3-bookworm
 WORKDIR /app
 ENV JULIA_DEPOT_PATH=/opt/julia-depot
-RUN apt-get update && apt-get install -y --no-install-recommends openssh-client \
-    && rm -rf /var/lib/apt/lists/*
 COPY Project.toml ./
 COPY src ./src
 COPY templates ./templates

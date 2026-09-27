@@ -1,8 +1,8 @@
 import { Container, getContainer } from "@cloudflare/containers";
 import { DurableObject } from "cloudflare:workers";
 import OAuthProvider, { insufficientScope } from "@cloudflare/workers-oauth-provider";
-import { forwardedHeaders, json, limited, origin, readBody, requireDistinctSecrets, sameSecret, ticket } from "../shared/http.js";
-import { StateError, stateAction } from "../shared/state.js";
+import { forwardedHeaders, json, limited, origin, readBody, requireDistinctSecrets, sameSecret, ticket } from "../../shared/cloudflare/http.js";
+import { StateError, stateAction } from "../../shared/cloudflare/state.js";
 import { oauthRoutes, refreshGitHub } from "./oauth.js";
 
 export class McpContainer extends Container {

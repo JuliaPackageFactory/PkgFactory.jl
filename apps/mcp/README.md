@@ -1,4 +1,4 @@
-# PkgFactoryMCP.jl
+# PkgFactory MCP application
 
 [![CI](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml)
 
@@ -7,14 +7,18 @@ Create Julia package repositories from an AI application using
 [ModelContextProtocol.jl](https://github.com/JuliaSMLM/ModelContextProtocol.jl).
 Requires Julia 1.12 or newer. Supports stdio and authenticated Streamable HTTP.
 
+This is the MCP interface in the PkgFactory monorepo. Its Julia package and
+module are named `PkgFactoryMCP`, alongside `PkgFactoryCLI` and `PkgFactoryWeb`.
+
 For multi-user OAuth and durable plans on Cloudflare Workers + Containers, see
-the [Cloudflare deployment guide](../../deploy/cloudflare/README.md).
+the [Cloudflare deployment guide](../../deploy/README.md).
 
 ## Quick start
 
-Clone the repository and instantiate its project. The pinned `[sources]` entries
-install the required PkgFactory API and MCP implementation; this checkout workflow
-also works while PkgFactory is not in the General registry.
+Clone the repository and instantiate the MCP project. Its `[sources]` entries
+use the local PkgFactory core at `../..` and pin ModelContextProtocol.jl to
+`v0.6.1`; this checkout workflow also works while PkgFactory is not in the
+General registry.
 
 ```sh
 git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
@@ -99,10 +103,10 @@ and place it behind a trusted HTTPS proxy. The HTTP launcher requires auth even
 on loopback. Static bearer tokens work only with clients that support supplying
 them; browser-based OAuth clients should use the Auth0 launcher.
 
-A Dockerfile, a Render Blueprint, and `apps/mcp/bin/auth0-server.jl` are included for an
-**Auth0-authenticated, single-operator HTTPS deployment**. See
-[hosting and recovery](docs/hosting.md) for setup and limitations. Deploying to
-Render and creating Auth0/GitHub credentials are separate setup steps.
+The [Render deployment](../../deploy/mcp/render/README.md) includes a Dockerfile
+and Blueprint that run `apps/mcp/bin/auth0-server.jl` for an
+**Auth0-authenticated, single-operator HTTPS deployment**. Deploying to Render
+and creating Auth0/GitHub credentials are separate setup steps.
 
 ## Julia API
 
@@ -128,7 +132,9 @@ The application implements `github_backend_for` and returns a
 `PkgFactory.Credential` holding that user's GitHub token. HTTP does not
 implicitly fall back to the server's environment token. Plan access is tied to
 the verified identity. Account linking and a durable credential/operation store
-are application responsibilities; the current package keeps plans in memory.
+are application responsibilities. The standalone server keeps plans in memory;
+the [Cloudflare deployment](../../deploy/README.md) supplies durable plans and
+per-user GitHub authorization.
 
 ## Development
 
@@ -150,8 +156,6 @@ and the [standard transport](https://modelcontextprotocol.io/specification/2025-
 
 ## Acknowledgments
 
-Generated from the `minimum` template of
-[PkgFactory.jl](https://github.com/JuliaPackageFactory/PkgFactory.jl). MIT licensed.
-
 This application was imported from JuliaPackageFactory/PkgFactoryMCP.jl
-at commit `0b16c0d106607e8dbdf47b4245a1d50189eb60a2` (MIT license retained).
+at commit `0b16c0d106607e8dbdf47b4245a1d50189eb60a2`. The original
+[MIT license](LICENSE) is retained.

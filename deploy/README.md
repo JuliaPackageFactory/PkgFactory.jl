@@ -1,9 +1,25 @@
-# Cloudflare deployment
+# Deployment
 
-This directory deploys the existing Julia applications from this monorepo:
+Deployment definitions mirror `apps/`: choose the application first, then the
+hosting provider. Application code and launchers remain under `apps/`.
 
-- `web/`: Worker Static Assets and a Julia Web container.
-- `mcp/`: OAuth 2.1 authorization, Streamable HTTP, and a Julia MCP container.
+| Path | Purpose |
+| --- | --- |
+| [`web/cloudflare/`](web/cloudflare/) | Web Worker, static assets, and Julia container |
+| [`mcp/cloudflare/`](mcp/cloudflare/) | MCP Worker, OAuth, and Julia container |
+| [`mcp/render/`](mcp/render/README.md) | Single-operator MCP deployment with Auth0 |
+| `shared/cloudflare/` | Shared Worker HTTP helpers and application state logic |
+| `scripts/cloudflare/` | Recovery, pricing, and container profiling tools |
+| `test/cloudflare/` | Worker unit and integration tests |
+
+The shared Node project lives here in `deploy/`; both Cloudflare Workers use its
+dependencies and lockfile. The CLI runs locally and has no hosted deployment.
+All Docker builds use the repository root as their context.
+
+## Cloudflare deployment
+
+The instructions below deploy the Web and MCP applications together:
+
 - The MCP Worker's SQLite-backed `ApplicationState` Durable Object stores exact
   rendered plans, completed results, and repository operation locks shared by both apps.
 - Workers KV holds the OAuth library's encrypted grants and browser-bound consent
@@ -12,9 +28,10 @@ This directory deploys the existing Julia applications from this monorepo:
 
 Hosting and authorization-server processing run on Cloudflare. GitHub remains
 the upstream identity provider and the destination for generated repositories.
-The existing local launchers and Render/Auth0 example remain available separately.
+For standalone hosting, see the [Web hosting guide](../docs/src/hosting.md) or
+the [Render/Auth0 deployment](mcp/render/README.md).
 
-## Prerequisites the account owner supplies
+### Prerequisites the account owner supplies
 
 Use this existing project directly. The dashboard's
 `npm create cloudflare@latest -- --template=cloudflare/templates/containers-template`
@@ -38,16 +55,16 @@ secret. The MCP app requests `repo`, `workflow`, and `read:user`. Each user gran
 their own GitHub permissions. Organization policies/SSO may require approval.
 No shared GitHub PAT or Auth0 account is needed for this deployment.
 
-## Configure and deploy
+### Configure and deploy
 
-Run these commands from `deploy/cloudflare`:
+Run these commands from `deploy`:
 
 ```sh
 npm ci
 npx wrangler login
 npx wrangler whoami
 # Only for a different account without the configured OAuth namespace:
-npx wrangler kv namespace create OAUTH_KV --config mcp/wrangler.jsonc
+npx wrangler kv namespace create OAUTH_KV --config mcp/cloudflare/wrangler.jsonc
 ```
 
 Update the committed Wrangler files with **non-secret** values:
@@ -76,13 +93,13 @@ Generate **five distinct random secrets**, each at least 32 bytes (for example
 only `WEB_STATE_SECRET` has the same value in both Workers:
 
 ```sh
-npx wrangler secret put MCP_TICKET_SECRET --config mcp/wrangler.jsonc
-npx wrangler secret put MCP_STATE_SECRET --config mcp/wrangler.jsonc
-npx wrangler secret put WEB_STATE_SECRET --config mcp/wrangler.jsonc
-npx wrangler secret put WEB_STATE_SECRET --config web/wrangler.jsonc
-npx wrangler secret put WEB_PROXY_SECRET --config web/wrangler.jsonc
-npx wrangler secret put STATE_RECOVERY_SECRET --config mcp/wrangler.jsonc
-npx wrangler secret put GITHUB_OAUTH_CLIENT_SECRET --config mcp/wrangler.jsonc
+npx wrangler secret put MCP_TICKET_SECRET --config mcp/cloudflare/wrangler.jsonc
+npx wrangler secret put MCP_STATE_SECRET --config mcp/cloudflare/wrangler.jsonc
+npx wrangler secret put WEB_STATE_SECRET --config mcp/cloudflare/wrangler.jsonc
+npx wrangler secret put WEB_STATE_SECRET --config web/cloudflare/wrangler.jsonc
+npx wrangler secret put WEB_PROXY_SECRET --config web/cloudflare/wrangler.jsonc
+npx wrangler secret put STATE_RECOVERY_SECRET --config mcp/cloudflare/wrangler.jsonc
+npx wrangler secret put GITHUB_OAUTH_CLIENT_SECRET --config mcp/cloudflare/wrangler.jsonc
 ```
 
 Wrangler prompts for the value; do not put secrets in command arguments, git,
@@ -128,7 +145,7 @@ images on relevant changes. It does not publish them. For unattended deployment,
 use Cloudflare account-scoped CI credentials instead of `wrangler login` and
 follow Cloudflare's [Containers deployment guide](https://developers.cloudflare.com/containers/guides/deploy-containers/).
 
-## Verify the deployed service
+### Verify the deployed service
 
 OAuth discovery, dynamic registration, and token endpoints accept browser CORS
 requests through the OAuth provider. `/mcp`, including preflights, validates
@@ -164,7 +181,7 @@ Cloudflare can reuse them without recompiling at startup. The container profile
 first loads the application with `--cpu-target=generic --compiled-modules=strict`
 to verify that the shipped caches work without generating replacements.
 
-## Persistence, failures, and recovery
+### Persistence, failures, and recovery
 
 Both apps initially route to one named container each, with `max_instances: 1`
 and a five-minute idle timeout. No always-on keepalive is configured. Static Web
@@ -205,7 +222,7 @@ To recover a stuck operation:
    through your local environment, then run:
 
    ```sh
-   node scripts/recover.js OWNER/REPO.jl --confirm-containers-stopped
+   node scripts/cloudflare/recover.js OWNER/REPO.jl --confirm-containers-stopped
    ```
 
 4. This clears only that repository's lock and marks its interrupted plans failed.
@@ -225,7 +242,7 @@ Rate limits are applied at the edge and inside Web; they are not a monthly cost
 cap. Logs are disabled by default to avoid recording OAuth callback URLs or
 credentials. Enable only redacted operational logging if adding observability.
 
-## Cost estimate (rates checked 2026-09-26)
+### Cost estimate (rates checked 2026-09-26)
 
 The configuration uses **two `basic` instances** (each 1 GiB RAM,
 0.25 vCPU, 4 GB disk). Memory/disk are charged for provisioned capacity while
@@ -276,9 +293,9 @@ notifications in Cloudflare.
 Recalculate the base/container subtotal with:
 
 ```sh
-node scripts/pricing.js 1 1 basic 2
+node scripts/cloudflare/pricing.js 1 1 basic 2
 # arguments: running hours per app/day, active vCPU-hours/month, size, app count
-node scripts/pricing.js 24 1 basic 2
+node scripts/cloudflare/pricing.js 24 1 basic 2
 ```
 
 Sources: [Containers pricing](https://developers.cloudflare.com/containers/platform/pricing/),
@@ -286,15 +303,15 @@ Sources: [Containers pricing](https://developers.cloudflare.com/containers/platf
 [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/),
 [no-swap FAQ](https://developers.cloudflare.com/containers/faq/#what-happens-if-i-run-out-of-memory).
 
-## Reproduce the local memory measurement
+### Reproduce the local memory measurement
 
 From the repository root, with Docker Desktop in Linux mode:
 
 ```sh
-docker build --platform linux/amd64 -f deploy/cloudflare/mcp/Dockerfile -t pkgfactory-mcp:cloudflare .
-docker build --platform linux/amd64 -f deploy/cloudflare/web/Dockerfile -t pkgfactory-web:cloudflare .
-node deploy/cloudflare/scripts/profile.js mcp
-node deploy/cloudflare/scripts/profile.js web
+docker build --platform linux/amd64 -f deploy/mcp/cloudflare/Dockerfile -t pkgfactory-mcp:cloudflare .
+docker build --platform linux/amd64 -f deploy/web/cloudflare/Dockerfile -t pkgfactory-web:cloudflare .
+node deploy/scripts/cloudflare/profile.js mcp
+node deploy/scripts/cloudflare/profile.js web
 ```
 
 The script uses the image's actual Julia command-line flags and enforces

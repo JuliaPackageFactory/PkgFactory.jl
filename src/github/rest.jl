@@ -60,7 +60,7 @@ function repository_availability(
     _validate_owner(owner_name)
     _bounded_text(repo_name, "package_name", 100)
     package_name = _package_name(repo_name)
-    package_check = Verifications.verify_package_name(package_name)
+    package_check = Verification.verify_package_name(package_name)
     package_check == "OK" || throw(InputError("Invalid package name."))
     normalized_repo_name = _normalize_repo_name(repo_name)
     _, status = _repository(

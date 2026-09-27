@@ -15,7 +15,7 @@ const GITHUB_API_VERSION = "2022-11-28"
 const GITHUB_OAUTH_CLIENT_ID = "Ov23libqpCkC6Z5pSlFG"
 
 include("errors.jl")
-include("Verifications.jl")
+include("verification.jl")
 include("templates.jl")
 include("spec.jl")
 include("plan.jl")

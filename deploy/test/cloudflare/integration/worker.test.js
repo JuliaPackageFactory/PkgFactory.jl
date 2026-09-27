@@ -14,13 +14,13 @@ const proxySecret = "web-proxy-".repeat(8);
 const browserOrigin = "http://localhost:6274";
 const fixture = async ({ maintenance = false, webMaintenance = false } = {}) => {
   const result = await build({ stdin: {
-    contents: `import worker, { ApplicationState } from './mcp/worker.js';
+    contents: `import worker, { ApplicationState } from './mcp/cloudflare/worker.js';
       export { ApplicationState };
       const limiter = { limit: async () => ({ success: true }) };
       export default { fetch(req, env, ctx) {
         return worker.fetch(req, { ...env, EDGE_LIMIT: limiter, AUTH_LIMIT: limiter, USER_LIMIT: limiter }, ctx);
       } };`,
-    resolveDir: fileURLToPath(new URL("../../", import.meta.url)),
+    resolveDir: fileURLToPath(new URL("../../../", import.meta.url)),
   }, bundle: true, format: "esm", platform: "neutral", mainFields: ["module", "main"], target: "es2022", write: false,
     external: ["cloudflare:*", "node:*"], conditions: ["workerd", "worker", "browser"] });
   return new Miniflare(convertV4MiniflareOptions({ workers: [{ name: "test", modules: true, script: result.outputFiles[0].text,
@@ -146,7 +146,7 @@ test("real Worker publishes OAuth discovery, challenges MCP, and binds consent t
 
 test("Web health reports maintenance and forwarding carries only its proxy credential", async () => {
   const result = await build({ stdin: {
-    contents: `import worker from './web/worker.js';
+    contents: `import worker from './web/cloudflare/worker.js';
       const limiter = { limit: async () => ({ success: true }) };
       const container = { idFromName: name => name, get: () => ({ fetch: async req =>
         Response.json({ proxy: req.headers.get('X-PkgFactory-Proxy'),
@@ -154,7 +154,7 @@ test("Web health reports maintenance and forwarding carries only its proxy crede
       export default { fetch(req, env) {
         return worker.fetch(req, { ...env, EDGE_LIMIT: limiter, WEB_CONTAINER: container,
           MAINTENANCE: new URL(req.url).searchParams.get('maintenance') || 'false' });
-      } };`, resolveDir: fileURLToPath(new URL("../../", import.meta.url)),
+      } };`, resolveDir: fileURLToPath(new URL("../../../", import.meta.url)),
   }, bundle: true, format: "esm", platform: "neutral", mainFields: ["module", "main"], target: "es2022", write: false,
     external: ["cloudflare:*", "node:*"], conditions: ["workerd", "worker", "browser"] });
   const mf = new Miniflare(convertV4MiniflareOptions({ workers: [{ name: "web", modules: true,

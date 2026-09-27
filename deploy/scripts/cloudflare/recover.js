@@ -3,7 +3,7 @@
 const repository = process.argv[2]?.toLowerCase();
 if (!/^[a-z0-9-]+\/[a-z0-9_.-]+$/.test(repository || "") ||
     !process.argv.includes("--confirm-containers-stopped")) {
-  throw new Error("Usage: node scripts/recover.js OWNER/REPO.jl --confirm-containers-stopped");
+  throw new Error("Usage: node deploy/scripts/cloudflare/recover.js OWNER/REPO.jl --confirm-containers-stopped");
 }
 const { MCP_ORIGIN, STATE_RECOVERY_SECRET } = process.env;
 if (!MCP_ORIGIN?.startsWith("https://") || !STATE_RECOVERY_SECRET || STATE_RECOVERY_SECRET.length < 32)

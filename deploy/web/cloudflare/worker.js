@@ -1,5 +1,5 @@
 import { Container, getContainer } from "@cloudflare/containers";
-import { forwardedHeaders, json, limited, origin, readBody, requireDistinctSecrets } from "../shared/http.js";
+import { forwardedHeaders, json, limited, origin, readBody, requireDistinctSecrets } from "../../shared/cloudflare/http.js";
 
 export class WebContainer extends Container {
   defaultPort = 8080;

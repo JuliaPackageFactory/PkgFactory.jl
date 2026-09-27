@@ -12,10 +12,6 @@ import UUIDs
 import Dates
 import JSON3
 
-function hello()
-    return "Hello, Templates.jl"
-end
-
 # Functions
 
 function _get_templates_path()::String

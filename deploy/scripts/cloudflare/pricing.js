@@ -7,7 +7,7 @@ const sizes = { basic: { memoryGiB: 1, diskGB: 4 }, "standard-1": { memoryGiB: 4
 const apps = Number(process.argv[5] ?? 2);
 if (![hoursPerAppPerDay, activeCpuHoursTotal].every(n => Number.isFinite(n) && n >= 0) ||
     hoursPerAppPerDay > 24 || !Number.isSafeInteger(apps) || apps < 1 || !sizes[instanceType])
-  throw new Error("Usage: node scripts/pricing.js HOURS_PER_APP_PER_DAY ACTIVE_VCPU_HOURS_TOTAL [basic|standard-1] [APP_COUNT]");
+  throw new Error("Usage: node deploy/scripts/cloudflare/pricing.js HOURS_PER_APP_PER_DAY ACTIVE_VCPU_HOURS_TOTAL [basic|standard-1] [APP_COUNT]");
 const runningHours = apps * 30 * hoursPerAppPerDay;
 const memory = Math.max(0, runningHours * sizes[instanceType].memoryGiB - 25) * 0.009;
 const disk = Math.max(0, runningHours * sizes[instanceType].diskGB - 200) * 0.000252;

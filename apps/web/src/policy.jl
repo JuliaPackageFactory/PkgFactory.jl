@@ -1,4 +1,4 @@
-# Included inside WebUI. One policy per serving process; never store raw tokens.
+# Included inside PkgFactoryWeb. One policy per serving process; never store raw tokens.
 struct RequestError <: Exception
     status::Int
     message::String

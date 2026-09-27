@@ -4,25 +4,25 @@ import Git
 import TOML
 
 @testset "verify_owner_name" begin
-    @test "OK" == PkgFactory.Verifications.verify_owner_name("ohno")
-    @test "OK" != PkgFactory.Verifications.verify_owner_name("")
+    @test "OK" == PkgFactory.Verification.verify_owner_name("ohno")
+    @test "OK" != PkgFactory.Verification.verify_owner_name("")
 end
 
 @testset "verify_package_name" begin
-    @test "OK" == PkgFactory.Verifications.verify_package_name("Physics")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("JuliaPkg")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("JustInTime")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("algebra")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("Linear_algebra")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("Math+Physics")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("Eigen京")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("VMC")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("Cake")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("juliaCI")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("Jump")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("VMCjl")
-    @test "OK" != PkgFactory.Verifications.verify_package_name("VMC.jl")
+    @test "OK" == PkgFactory.Verification.verify_package_name("Physics")
+    @test "OK" != PkgFactory.Verification.verify_package_name("")
+    @test "OK" != PkgFactory.Verification.verify_package_name("JuliaPkg")
+    @test "OK" != PkgFactory.Verification.verify_package_name("JustInTime")
+    @test "OK" != PkgFactory.Verification.verify_package_name("algebra")
+    @test "OK" != PkgFactory.Verification.verify_package_name("Linear_algebra")
+    @test "OK" != PkgFactory.Verification.verify_package_name("Math+Physics")
+    @test "OK" != PkgFactory.Verification.verify_package_name("Eigen京")
+    @test "OK" != PkgFactory.Verification.verify_package_name("VMC")
+    @test "OK" != PkgFactory.Verification.verify_package_name("Cake")
+    @test "OK" != PkgFactory.Verification.verify_package_name("juliaCI")
+    @test "OK" != PkgFactory.Verification.verify_package_name("Jump")
+    @test "OK" != PkgFactory.Verification.verify_package_name("VMCjl")
+    @test "OK" != PkgFactory.Verification.verify_package_name("VMC.jl")
 end
 
 @testset "get_template_path" begin

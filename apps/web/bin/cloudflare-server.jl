@@ -1,6 +1,6 @@
 using PkgFactoryWeb
 import PkgFactory
-include(joinpath(@__DIR__, "..", "..", "shared", "Cloudflare.jl"))
+include(joinpath(@__DIR__, "..", "..", "shared", "cloudflare.jl"))
 client = Cloudflare.StateClient(ENV["MCP_ORIGIN"], ENV["WEB_STATE_SECRET"])
 creator = (credential, plan; kwargs...) -> Cloudflare.with_repository_operation(client, plan) do
     PkgFactory.create_package(credential, plan; kwargs...)
