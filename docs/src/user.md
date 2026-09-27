@@ -2,6 +2,42 @@
 
 To create your first package in a browser, follow the [Quick Start](index.md#Quick-Start).
 
+## Interfaces
+
+PkgFactory.jl can be used through:
+
+- **CLI** (local) — create packages from the terminal
+- **Web UI** (local & [hosted](https://pkgfactory-web.ohnolab.workers.dev/)) — create and configure packages from a browser
+- **MCP** (stdio & Streamable HTTP) — create packages from AI applications
+
+## Local Setup
+
+For CLI:
+
+```sh
+git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
+cd PkgFactory.jl
+julia +1.12 --project=apps/cli --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia +1.12 --project=apps/cli --startup-file=no apps/cli/bin/pkgfactory.jl
+```
+
+For Web UI:
+
+```sh
+git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
+cd PkgFactory.jl
+julia +1.12 --project=apps/web --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia +1.12 --project=apps/web --startup-file=no apps/web/bin/pkgfactory-web.jl
+```
+
+For MCP:
+
+```sh
+git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
+cd PkgFactory.jl
+julia +1.12 --project=apps/mcp --startup-file=no -e 'import Pkg; Pkg.instantiate()'
+julia +1.12 --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl --read-only
+
 ## Choosing a template
 
 All templates include a Julia module, tests, `Project.toml`, a README, an MIT

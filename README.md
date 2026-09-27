@@ -5,7 +5,11 @@
 [![Build Status](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaPackageFactory/PkgFactory.jl)
 
-This package automates repository creation and package infrastructure deployment. It can be used via the CLI, a Web UI (local or hosted), and MCP (`stdio` or Streamable HTTP).
+This package automates repository creation and package infrastructure deployment.
+
+## Quick Start
+
+It can be used via the CLI, a Web UI (local or hosted), and MCP (stdio or Streamable HTTP). The easiest way is to access and use this website: https://pkgfactory-web.ohnolab.workers.dev/
 
 ## Documentation
 
