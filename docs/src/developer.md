@@ -3,14 +3,10 @@
 This guide covers development of PkgFactory itself. To work on a generated
 package, see the [User Guide](user.md).
 
-- This page covers the repository layout, local tests, and documentation builds.
-- [Authentication Design](authentication-design.md) explains the current login flows, credential boundaries, and planned changes.
-- [Template Design](developer/templates.md) explains the presets and their design choices.
-- [Template Repository Tests](developer/template-tests.md) covers publishing and testing the generated examples on GitHub.
-- [Web UI Hosting](hosting.md) covers running the browser interface as a shared service.
+This page covers the repository layout, local tests, and documentation builds.
+To operate a hosted service, use the [Deployment Overview](deployment/index.md).
 
-Run all commands from the repository root. The core and applications require
-Julia 1.12 or later.
+Run all commands from the repository root unless a command changes directory.
 
 ## Repository layout
 
@@ -49,7 +45,7 @@ Keep application implementations and launchers in `apps/<app>/`, and hosting
 definitions in `deploy/<app>/<provider>/`. Shared application adapters belong
 in `apps/shared/`; shared deployment code belongs in `deploy/shared/<provider>/`.
 Deployment scripts and tests follow the same provider grouping. See the
-[deployment guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/deploy/README.md)
+[Deployment Overview](deployment/index.md)
 for the available targets and commands.
 
 Keep shared behavior in `PackageSpec`, `package_schema`, `plan_package`, and
@@ -63,9 +59,6 @@ workspace containing its own `test` project and a committed Manifest. Applicatio
 resolve the local core through `[sources]` with a relative `../..` path; they
 are not members of the root workspace.
 
-Documentation deploy keys use the core's direct `OpenSSH_jll` dependency; all
-applications receive the bundled executable through PkgFactory. Installing system
-OpenSSH or adding `ssh-keygen` to PATH is unnecessary.
 [`DocumenterTools.genkeys`](https://github.com/JuliaDocs/DocumenterTools.jl/blob/v0.1.21/src/genkeys.jl)
 is an interactive API that prints the private key and changes the process working
 directory. PkgFactory instead calls the same `OpenSSH_jll.ssh_keygen()` executable
@@ -94,6 +87,14 @@ create GitHub repositories. Run browser input tests with
 `node apps/web/test/browser.cjs`. The separate
 [template repository tests](developer/template-tests.md) publish to GitHub.
 
+To open a development REPL:
+
+```sh
+julia --project=. --startup-file=no -i -e 'using PkgFactory'
+```
+
+### Deployment tests
+
 Test the Cloudflare deployment from its shared Node project:
 
 ```sh
@@ -102,20 +103,12 @@ npm ci
 npm test
 npm run test:integration
 npm run check
+cd ..
 ```
 
-Return to the repository root for the Julia commands below. `check` bundles
-both Workers without deploying them or building container images.
-
-The core tests also generate real RSA-4096 key pairs concurrently in a child Julia
-process with an empty PATH. They verify matching public/private keys, silent
-output and logging, unchanged working directory, and temporary-file cleanup.
-
-To open a development REPL:
-
-```sh
-julia --project=. --startup-file=no -i -e 'using PkgFactory'
-```
+`check` bundles both Workers without deploying them or building container images.
+For the container checks used by CI, see
+[Reproduce the local memory measurement](deployment/cloudflare.md#Reproduce-the-local-memory-measurement).
 
 ## Building documentation
 
@@ -124,8 +117,17 @@ julia --project=docs --startup-file=no -e 'import Pkg; Pkg.instantiate()'
 julia --project=docs --startup-file=no docs/build.jl
 ```
 
-The local build writes to `docs/build/`. Register new pages in `docs/build.jl`.
-CI uses `docs/make.jl`, which also calls `deploydocs`.
+The local build writes to `docs/build/`. Register new pages in
+`docs/navigation.jl` and update the README's Documentation list to match its
+titles, order, hierarchy, and published URLs. The build checks that list against
+the navigation before rendering. CI uses `docs/make.jl`, which also calls
+`deploydocs`.
+
+Keep guide content in `docs/src/`. Each procedure or explanation has one
+canonical page; other pages link to it. The root README provides the entry
+points, and `apps/` and `deploy/` contain implementation and configuration
+without copies of their guides. Template READMEs belong to the generated
+packages and follow those packages' documentation structure.
 
 ### Deployment
 

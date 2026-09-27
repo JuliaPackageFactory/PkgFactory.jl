@@ -2,6 +2,9 @@ using PkgFactory
 using Documenter
 using DocumenterMermaid
 
+include("navigation.jl")
+check_readme_navigation()
+
 DocMeta.setdocmeta!(PkgFactory, :DocTestSetup, :(using PkgFactory); recursive=true)
 
 makedocs(;
@@ -27,16 +30,5 @@ makedocs(;
             """),
         ],
     ),
-    pages=[
-        "Home" => "index.md",
-        "User Guide" => "user.md",
-        "Developer Guide" => [
-            "Development Workflow" => "developer.md",
-            "Authentication Design" => "authentication-design.md",
-            "Template Design" => "developer/templates.md",
-            "Template Repository Tests" => "developer/template-tests.md",
-            "Web UI Hosting" => "hosting.md",
-        ],
-        "API Reference" => "api.md",
-    ],
+    pages=DOC_PAGES,
 )

@@ -39,8 +39,9 @@ The `.gitignore` differences are intentional: only documentation templates need
 `docs/build/`, and only all-in-one includes notebooks. Shared line-ending and
 editor settings are consistent across presets.
 
-The `.pkgfactory.json` file is a repository-creation recovery marker. Updating
-existing packages from templates would need a separate design and file format.
+The [recovery marker](../user.md#Resuming-an-interrupted-setup) is not a template
+update mechanism. Updating existing packages from templates would need a
+separate design and file format.
 
 ## Validating changes
 

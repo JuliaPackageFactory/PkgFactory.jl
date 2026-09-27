@@ -1,28 +1,15 @@
-# PkgFactory MCP application
+# MCP Guide
 
-[![CI](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/JuliaPackageFactory/PkgFactory.jl/actions/workflows/CI.yml)
-
-Create Julia package repositories from an AI application using
-[PkgFactory.jl](https://github.com/JuliaPackageFactory/PkgFactory.jl) and
+The MCP interface is the `PkgFactoryMCP` Julia application in `apps/mcp/`.
+It supports stdio and authenticated Streamable HTTP through
 [ModelContextProtocol.jl](https://github.com/JuliaSMLM/ModelContextProtocol.jl).
-Requires Julia 1.12 or newer. Supports stdio and authenticated Streamable HTTP.
-
-This is the MCP interface in the PkgFactory monorepo. Its Julia package and
-module are named `PkgFactoryMCP`, alongside `PkgFactoryCLI` and `PkgFactoryWeb`.
-
-For multi-user OAuth and durable plans on Cloudflare Workers + Containers, see
-the [Cloudflare deployment guide](../../deploy/README.md).
 
 ## Quick start
 
-Clone the repository and instantiate the MCP project. Its `[sources]` entries
-use the local PkgFactory core at `../..` and pin ModelContextProtocol.jl to
-`v0.6.1`; this checkout workflow also works while PkgFactory is not in the
-General registry.
+[Get the source](index.md#Get-the-source), then run these commands from the
+repository root:
 
 ```sh
-git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
-cd PkgFactory.jl
 julia --project=apps/mcp --startup-file=no -e 'using Pkg; Pkg.instantiate()'
 julia --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl --read-only
 ```
@@ -74,18 +61,30 @@ Example input to `preview_package`:
 }
 ```
 
-The defaults are **all-in-one** and **public**, shared with the core. `name` may end in `.jl`.
-`resume` is an optional boolean, defaulting to `false`. Preview validates settings
-without GitHub access; it does not check whether a remote repository exists.
+Input fields, defaults, and preview validation follow the shared
+[package settings](user.md#Package-settings).
 
 Present the preview to the user and execute only within their authorization.
 Creation accepts the saved plan ID, so settings cannot be changed between
 preview and execution. The client controls user approval: a plan ID itself is
-not proof of human consent. Tokens are never tool arguments.
+not proof of human consent.
 
-Completed plans return the same result on retry while retained. Plans expire
-after 15 minutes by default and do not survive server restart. After a failed
-creation, inspect GitHub before making a new preview with `resume: true`.
+## Plan lifecycle
+
+Plans expire 15 minutes after preview by default. A completed plan returns its
+cached result on a repeat call while retained. An in-flight or failed plan cannot
+be executed again. Different previews create different plans; this does not
+provide global repository deduplication. For failed creation, follow
+[Resuming an interrupted setup](user.md#Resuming-an-interrupted-setup).
+
+The standalone stdio, HTTP, and Render launchers store plans in process memory,
+with up to 256 records. Restarting or redeploying invalidates them, and replicas
+do not share them. Configure `plan_ttl` and `max_plans` in `build_server` to change
+these defaults. Cloudflare uses a [durable store](deployment/cloudflare.md#Persistence,-failures,-and-recovery)
+with additional quotas and recovery controls.
+
+Tools execute synchronously. Long-running jobs require a persistent operation
+store and a worker; account for creation time in the client's request timeout.
 
 ## HTTP and HTTPS
 
@@ -101,12 +100,8 @@ Connect to `http://127.0.0.1:8080/mcp` with
 To make the service reachable outside the machine, bind with `--host 0.0.0.0`
 and place it behind a trusted HTTPS proxy. The HTTP launcher requires auth even
 on loopback. Static bearer tokens work only with clients that support supplying
-them; browser-based OAuth clients should use the Auth0 launcher.
-
-The [Render deployment](../../deploy/mcp/render/README.md) includes a Dockerfile
-and Blueprint that run `apps/mcp/bin/auth0-server.jl` for an
-**Auth0-authenticated, single-operator HTTPS deployment**. Deploying to Render
-and creating Auth0/GitHub credentials are separate setup steps.
+them. For hosted OAuth services, choose a target in the
+[Deployment Overview](deployment/index.md).
 
 ## Julia API
 
@@ -132,30 +127,16 @@ The application implements `github_backend_for` and returns a
 `PkgFactory.Credential` holding that user's GitHub token. HTTP does not
 implicitly fall back to the server's environment token. Plan access is tied to
 the verified identity. Account linking and a durable credential/operation store
-are application responsibilities. The standalone server keeps plans in memory;
-the [Cloudflare deployment](../../deploy/README.md) supplies durable plans and
-per-user GitHub authorization.
+are application responsibilities; use the
+[Cloudflare integration](deployment/cloudflare.md) for the included implementation.
 
-## Development
-
-```sh
-julia --project=apps/mcp --startup-file=no -e 'using Pkg; Pkg.test()'
-```
-
-Tests cover protocol discovery, configuration validation, plan execution,
-duplicate calls, user isolation, expiration, error redaction, real stdio, and
-real HTTP authentication. GitHub-changing operations use a mock backend.
-
-See the [Developer Guide](../../docs/src/developer.md) for the repository layout
-and shared development workflow. Package validation, defaults, template
-generation, creation, and recovery are provided by the local core. The MCP plan
-store handles caller identity, expiration, and duplicate tool calls.
-
-Streamable HTTP uses the [MCP SDK](https://github.com/JuliaSMLM/ModelContextProtocol.jl)
-and the [standard transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
+For application tests and development commands, see
+[Development Workflow](developer.md#Local-development-and-tests).
+Streamable HTTP follows the
+[standard transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
 
 ## Acknowledgments
 
 This application was imported from JuliaPackageFactory/PkgFactoryMCP.jl
 at commit `0b16c0d106607e8dbdf47b4245a1d50189eb60a2`. The original
-[MIT license](LICENSE) is retained.
+[MIT license](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/apps/mcp/LICENSE) is retained.

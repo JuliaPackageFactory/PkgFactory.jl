@@ -45,13 +45,14 @@ remote availability.
 The browser uses GitHub's device login: authorize the displayed code in GitHub
 and return to the form. It requests `repo`, `workflow`, `read:user`, and
 `read:org` permissions to create repositories, commit workflows, and list owners.
-The access token stays in the browser tab's memory and is sent to the server
-for GitHub operations. Closing the tab clears that copy; it does not revoke
-the authorization in GitHub.
+See [Authentication Design](authentication-design.md#CLI-and-Web-UI:-Device-Flow)
+for token handling and the underlying protocol.
 
 The terminal also supports device login. For scripts, supply a GitHub token
-that can create repositories and write their files and workflows. Templates
-with documentation also need access to deploy keys and repository secrets.
+that can create repositories and write their files and workflows. A classic PAT
+needs `repo` and `workflow`; organization policies or SSO may require additional
+authorization. Templates with documentation also need access to deploy keys and
+repository secrets.
 
 ## After creation
 
@@ -90,7 +91,7 @@ create tags and GitHub releases after registration.
 
 ## Terminal interface
 
-From the PkgFactory checkout used in the Quick Start, run:
+From the PkgFactory checkout in [Get the source](index.md#Get-the-source), run:
 
 ```sh
 julia --project=apps/cli --startup-file=no -e 'import Pkg; Pkg.instantiate()'
@@ -165,14 +166,31 @@ its setup status after a failed creation. From Julia, you can query it with:
 repository_status(credential.access_token, spec.owner, spec.name)
 ```
 
+The returned `state` is:
+
+| State | Meaning |
+| --- | --- |
+| `not_found` | GitHub returned 404 for this caller; check the account and permissions |
+| `unverified` | No recognized recovery marker; inspect manually |
+| `files_committed` | The template commit is recorded; later setup may still be running or have failed |
+| `complete` | Setup recorded completion; this does not audit later repository edits or CI |
+
 If the template was committed, use the original settings and select **Resume
 interrupted setup** in the browser, add `--resume` to the CLI command, or build
 a new `PackageSpec` with `resume=true` in Julia. Keep the owner, name, authors,
 description, template, visibility, and commit message unchanged.
 
-Resume requires a matching `.pkgfactory.json` recovery marker and an unchanged
-`Project.toml`. It continues the remaining setup without replacing the package
+The core commits `.pkgfactory.json` atomically with the template. This marker
+holds a settings fingerprint, a `Project.toml` digest, and the operation state,
+without credentials. The final successful step records `complete` separately.
+Resume requires a matching marker and an unchanged `Project.toml`.
+It continues the remaining setup without replacing the package
 files. A completed matching operation returns its repository URL without writes.
 If creation stopped before the template commit, or the repository has no recovery
 marker, inspect it manually; automatic resume is refused. PkgFactory does not
 delete repositories or roll back changes after a failure.
+
+For documentation templates, recovery installs a new deploy key pair and updates
+the Secret before deleting older keys titled `PkgFactory Documenter ...`. Other
+deploy keys are preserved. If uploading the Secret fails, the next explicit
+resume repairs the pair.

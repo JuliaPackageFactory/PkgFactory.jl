@@ -56,7 +56,7 @@ The workflow does not wait for the generated repositories' own workflows.
 Documentation deployment in `TemplateSimple.jl` and `TemplateAllInOne.jl`
 requires a deploy key and `DOCUMENTER_KEY`, configured separately.
 
-Simple and AllInOne upload coverage using GitHub OIDC. No `CODECOV_TOKEN` secret
-is needed in the template repositories. Sign in to Codecov and give its GitHub
-App access to both repositories. Coverage is uploaded by their own CI workflows;
-the PkgFactory E2E workflow does not upload coverage on their behalf.
+Configure the generated repositories' services using
+[Documentation and coverage](../user.md#Documentation-and-coverage).
+Coverage is uploaded by their own CI workflows; the PkgFactory E2E workflow does
+not upload coverage on their behalf.

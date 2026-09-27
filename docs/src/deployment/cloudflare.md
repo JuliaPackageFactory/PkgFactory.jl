@@ -1,37 +1,12 @@
-# Deployment
+# Cloudflare
 
-Deployment definitions mirror `apps/`: choose the application first, then the
-hosting provider. Application code and launchers remain under `apps/`.
+This guide deploys Web and MCP together using the configuration under
+`deploy/web/cloudflare/` and `deploy/mcp/cloudflare/`. Both Workers use the Node
+project and lockfile in `deploy/`; Docker builds use the repository root as
+context. See [Authentication Design](../authentication-design.md#Cloudflare-MCP:-OAuth-PKCE)
+for the OAuth flow and credential boundaries.
 
-| Path | Purpose |
-| --- | --- |
-| [`web/cloudflare/`](web/cloudflare/) | Web Worker, static assets, and Julia container |
-| [`mcp/cloudflare/`](mcp/cloudflare/) | MCP Worker, OAuth, and Julia container |
-| [`mcp/render/`](mcp/render/README.md) | Single-operator MCP deployment with Auth0 |
-| `shared/cloudflare/` | Shared Worker HTTP helpers and application state logic |
-| `scripts/cloudflare/` | Recovery, pricing, and container profiling tools |
-| `test/cloudflare/` | Worker unit and integration tests |
-
-The shared Node project lives here in `deploy/`; both Cloudflare Workers use its
-dependencies and lockfile. The CLI runs locally and has no hosted deployment.
-All Docker builds use the repository root as their context.
-
-## Cloudflare deployment
-
-The instructions below deploy the Web and MCP applications together:
-
-- The MCP Worker's SQLite-backed `ApplicationState` Durable Object stores exact
-  rendered plans, completed results, and repository operation locks shared by both apps.
-- Workers KV holds the OAuth library's encrypted grants and browser-bound consent
-  transactions. GitHub tokens stay in encrypted OAuth props; they are never MCP
-  tool arguments, plan records, or shared operator credentials.
-
-Hosting and authorization-server processing run on Cloudflare. GitHub remains
-the upstream identity provider and the destination for generated repositories.
-For standalone hosting, see the [Web hosting guide](../docs/src/hosting.md) or
-the [Render/Auth0 deployment](mcp/render/README.md).
-
-### Prerequisites the account owner supplies
+## Prerequisites the account owner supplies
 
 Use this existing project directly. The dashboard's
 `npm create cloudflare@latest -- --template=cloudflare/templates/containers-template`
@@ -39,7 +14,7 @@ command creates a separate starter project and is not needed here. The first
 `wrangler deploy` builds/uploads the image and creates the Container application;
 an empty Containers dashboard before that deployment is expected.
 
-1. Enable **Workers Paid** on the Cloudflare account (USD 5/month minimum).
+1. Enable **Workers Paid** on the Cloudflare account.
 2. Choose the account's `workers.dev` subdomain, or configure custom domains.
 3. Install Node.js 22+ and start Docker with Linux container support. Images must
    target `linux/amd64`. A Linux CI runner can build/deploy instead.
@@ -50,12 +25,9 @@ an empty Containers dashboard before that deployment is expected.
 | Web | `https://pkgfactory-web.ohnolab.workers.dev` | Same URL | Enable Device Flow; copy Client ID |
 | MCP | `https://pkgfactory-mcp.ohnolab.workers.dev` | `https://pkgfactory-mcp.ohnolab.workers.dev/callback` | Copy Client ID and Client Secret |
 
-Use your final hostnames in these settings. The Web app needs no OAuth client
-secret. The MCP app requests `repo`, `workflow`, and `read:user`. Each user grants
-their own GitHub permissions. Organization policies/SSO may require approval.
-No shared GitHub PAT or Auth0 account is needed for this deployment.
+Use your final hostnames in these settings.
 
-### Configure and deploy
+## Configure and deploy
 
 Run these commands from `deploy`:
 
@@ -127,17 +99,13 @@ migration. Existing plans and locks stay in the same Durable Object. Recover
 any old stuck locks before admitting new operations.
 
 ```sh
-npm test
-npm run test:integration
-npm run check
 npm run deploy:mcp
 npm run deploy:web
 ```
 
-`check` validates and bundles the Workers without deploying or building images.
-`deploy:*` builds the images using the **repository root as Docker context**, then
-publishes the Worker/container. The MCP deployment must be ready before Web
-creation can use its shared operation store. All deployments use the same
+Run the [deployment tests](../developer.md#Deployment-tests) before publishing.
+`deploy:*` builds the images and publishes the Worker/container. The MCP deployment
+must be ready before Web creation can use its shared operation store. All deployments use the same
 checkout, including uncommitted changes if run locally; use a reviewed commit.
 
 The `Cloudflare` GitHub Actions workflow tests Workers and builds both Linux
@@ -145,31 +113,28 @@ images on relevant changes. It does not publish them. For unattended deployment,
 use Cloudflare account-scoped CI credentials instead of `wrangler login` and
 follow Cloudflare's [Containers deployment guide](https://developers.cloudflare.com/containers/guides/deploy-containers/).
 
-### Verify the deployed service
+## Verify the deployed service
 
 OAuth discovery, dynamic registration, and token endpoints accept browser CORS
 requests through the OAuth provider. `/mcp`, including preflights, validates
 `MCP_ALLOWED_ORIGINS`; consent and callback routes keep the same-origin policy
 and browser-bound CSRF checks. Bearer tokens are still required for MCP calls.
 
-1. Open the Web origin, sign in with GitHub, and check the owner/template list.
-2. Connect an OAuth-capable MCP client to `MCP_ORIGIN/mcp`. Discovery supports
+Complete the [common acceptance checks](index.md#Acceptance-checks), then verify
+these Cloudflare-specific behaviors:
+
+1. Connect an OAuth-capable MCP client to `MCP_ORIGIN/mcp`. Discovery supports
    dynamic client registration and Client ID Metadata Documents. Confirm the
    client name/destination on the consent page, then sign in with GitHub.
-3. List tools and preview a `minimum` package. Wait more than five idle minutes,
-   then execute the saved plan **within its 15-minute lifetime**. The exact files
+2. List tools and preview a `minimum` package. Wait more than five idle minutes,
+   then execute the saved plan **before it expires**. The exact files
    and UUID must survive a container restart.
-4. Use two GitHub accounts to verify isolation. An account must not execute
+3. Use two GitHub accounts to verify isolation. An account must not execute
    another account's `plan_id`. Repeating a completed plan returns its saved result.
-5. Perform one explicitly authorized package creation with each interface, and
-   inspect the generated repository and workflow results. These live checks
-   change GitHub; automated tests use simulated GitHub responses.
 
 Streamable HTTP uses stateless POST requests and JSON responses. The optional
 GET/SSE channel returns 405. No MCP session ID needs to survive a container
-restart. Direct cross-origin browser fetches to MCP are refused; OAuth desktop
-or server-side MCP clients work without an Origin header. The Web UI uses its
-own same-origin API.
+restart.
 
 `/health` on MCP and `/api/health` on Web check the **gateway**, without waking
 Julia. Exercise tool discovery/Web configuration to check container readiness.
@@ -181,18 +146,18 @@ Cloudflare can reuse them without recompiling at startup. The container profile
 first loads the application with `--cpu-target=generic --compiled-modules=strict`
 to verify that the shipped caches work without generating replacements.
 
-### Persistence, failures, and recovery
+## Persistence, failures, and recovery
 
 Both apps initially route to one named container each, with `max_instances: 1`
 and a five-minute idle timeout. No always-on keepalive is configured. Static Web
 requests and MCP OAuth discovery do not start Julia. Sleep and deployments clear
 container memory/disk, but not Durable Object storage.
 
-Plans live for 15 minutes, at most 16 retained plans per authenticated principal
-and 256 across all users, with a 100 KB snapshot
-limit. Successful results remain available for 15 minutes after completion.
-Expired inactive plans are cleaned up when a new preview is stored. Failed
-plans cannot be retried; preview an explicit resume after inspecting GitHub.
+The [MCP plan lifetime](../mcp.md#Plan-lifecycle) also applies here. The durable
+store allows at most 16 retained plans per authenticated principal and 256 across
+all users, with a 100 KB snapshot limit. Successful results remain available for
+a fresh plan lifetime measured from completion.
+Expired inactive plans are cleaned up when a new preview is stored.
 Interrupted running plans remain blocked for operator recovery.
 
 Repository locks apply across Web and MCP and do not expire automatically. This
@@ -226,9 +191,8 @@ To recover a stuck operation:
    ```
 
 4. This clears only that repository's lock and marks its interrupted plans failed.
-   Remove maintenance mode and redeploy both Workers. Create a new preview with
-   `resume: true` if GitHub shows a recoverable PkgFactory repository; otherwise
-   resolve the partial state manually. Core recovery never adopts an unrelated repo.
+   Remove maintenance mode and redeploy both Workers, then follow
+   [Resuming an interrupted setup](../user.md#Resuming-an-interrupted-setup).
 
 The recovery endpoint requires the operator key and checks MCP maintenance plus
 the Web gateway's `/api/health` maintenance response. Container shutdown is still
@@ -242,7 +206,7 @@ Rate limits are applied at the edge and inside Web; they are not a monthly cost
 cap. Logs are disabled by default to avoid recording OAuth callback URLs or
 credentials. Enable only redacted operational logging if adding observability.
 
-### Cost estimate (rates checked 2026-09-26)
+## Cost estimate (rates checked 2026-09-26)
 
 The configuration uses **two `basic` instances** (each 1 GiB RAM,
 0.25 vCPU, 4 GB disk). Memory/disk are charged for provisioned capacity while
@@ -279,10 +243,6 @@ At continuous full CPU use, the two basic instances could consume 360 vCPU-hours
 in 30 days: about **USD 47.90** including the estimated DO duration, before other
 overages. The 24-hour idle estimate is not a busy-service estimate.
 
-The earlier **USD 59.47** figure was the base + memory/disk subtotal for two
-4 GiB `standard-1` instances kept running all month. It is not the cost of the
-smaller sleeping configuration now shipped.
-
 For light use, Workers, KV, Durable Objects and egress will usually stay within
 their included allowances, but this is an estimate, not a cap. Taxes, exchange
 rates, domain registration, build overages, other apps on the account, and
@@ -303,7 +263,7 @@ Sources: [Containers pricing](https://developers.cloudflare.com/containers/platf
 [Durable Objects pricing](https://developers.cloudflare.com/durable-objects/platform/pricing/),
 [no-swap FAQ](https://developers.cloudflare.com/containers/faq/#what-happens-if-i-run-out-of-memory).
 
-### Reproduce the local memory measurement
+## Reproduce the local memory measurement
 
 From the repository root, with Docker Desktop in Linux mode:
 

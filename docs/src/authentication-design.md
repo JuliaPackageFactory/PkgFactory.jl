@@ -1,8 +1,8 @@
 # Authentication Design
 
-Authentication belongs to the applications; the PkgFactory core receives an
-explicit `Credential` for GitHub operations. The flows below describe the
-implementation in this checkout, not the deployment status of a hosted service.
+The flows below describe the implementation in this checkout, not the deployment
+status of a hosted service. For the boundaries between the core and applications,
+see [Repository layout](developer.md#Repository-layout).
 
 ## Methods and adoption
 
@@ -62,18 +62,16 @@ sequenceDiagram
 ```
 
 The user enters **`user_code`**, not `device_code`. The latter is used only for
-polling. Device Flow requests `repo`, `workflow`, `read:user`, and `read:org`;
-the CLI and browser reject a token missing `repo` or `workflow`. Polling waits
+polling. The CLI and browser reject a token missing repository or workflow
+permissions. Polling waits
 while authorization is pending, increases the delay on `slow_down`, and stops
 on success or an error such as denial or expiry.
 
 The browser keeps the GitHub token in its tab's memory and sends it as
 `Authorization: Bearer ...` for repository operations. The Web server does not
 persist it. Closing the tab clears that copy without revoking the GitHub grant.
-The CLI first uses `GITHUB_TOKEN`, falling back to `GH_TOKEN` when unset; it
-starts Device Flow only when no token is available. Preview needs no credential.
 See [GitHub authentication](user.md#GitHub-authentication) for usage and
-[Web UI Hosting](hosting.md) for deployment controls.
+[Standalone Web](deployment/web.md) for deployment controls.
 
 ## Cloudflare MCP: OAuth + PKCE
 
@@ -144,24 +142,10 @@ ticket for the private container. `apps/mcp/src/cloudflare.jl` verifies it and
 constructs a per-user `Credential`. Plan ownership uses the verified GitHub
 identity. GitHub tokens never become tool arguments or plan records; the
 ApplicationState Durable Object stores plans, results, and repository locks
-separately from OAuth grants in KV. The client obtains user approval for each
-creation; possession of a plan ID alone is not proof of that approval.
+separately from OAuth grants in KV. Client approval is described in the
+[MCP tool workflow](mcp.md#Tools).
 
-Service credentials have separate roles: `MCP_TICKET_SECRET` signs container
-tickets, `MCP_STATE_SECRET` grants MCP state access, `WEB_STATE_SECRET` grants
-only Web repository lock access, and `WEB_PROXY_SECRET` authenticates Web
-gateway forwarding. `STATE_RECOVERY_SECRET` is reserved for operator recovery
-and is passed to neither container. See the
-[Cloudflare deployment guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/deploy/README.md)
-for configuration and rotation.
-
-## Other MCP launchers
-
-Local stdio MCP uses `GITHUB_TOKEN` (or `GH_TOKEN`) from the server environment
-when creation is requested. The standalone HTTP launcher requires a separate
-`MCP_AUTH_TOKEN` for client access. The Render/Auth0 launcher validates an
-Auth0 token and permits one configured operator subject, using a separate
-server-side GitHub credential for repository operations. These MCP access
-tokens are never forwarded to GitHub. See the
-[MCP guide](https://github.com/JuliaPackageFactory/PkgFactory.jl/tree/main/apps/mcp)
-for those launchers.
+Service credentials isolate container forwarding, plan storage, Web repository
+locks, and operator recovery. Their roles, configuration, and rotation are
+defined in [Cloudflare deployment](deployment/cloudflare.md#Configure-and-deploy).
+For the other transports, see the [MCP Guide](mcp.md).
