@@ -114,14 +114,13 @@ For the container checks used by CI, see
 
 ```sh
 julia --project=docs --startup-file=no -e 'import Pkg; Pkg.instantiate()'
-julia --project=docs --startup-file=no docs/build.jl
+julia --project=docs --startup-file=no docs/make.jl
 ```
 
-The local build writes to `docs/build/`. Register new pages in
-`docs/navigation.jl` and update the README's Documentation list to match its
-titles, order, hierarchy, and published URLs. The build checks that list against
-the navigation before rendering. CI uses `docs/make.jl`, which also calls
-`deploydocs`.
+The local build writes to `docs/build/`. Register new pages in the `pages` list
+in `docs/make.jl` and update the README's Documentation list to match its
+titles, order, hierarchy, and published URLs. CI uses the same `docs/make.jl`,
+which also calls `deploydocs`.
 
 Keep guide content in `docs/src/`. Each procedure or explanation has one
 canonical page; other pages link to it. The root README provides the entry
