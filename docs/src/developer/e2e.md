@@ -1,8 +1,8 @@
-# Template Repository Tests
+# Template E2E Tests
 
 The **Template repositories E2E** workflow publishes generated snapshots to
 three dedicated GitHub repositories and runs their package tests. It is separate
-from the [local test suite](../developer.md#Local-development-and-tests) and only
+from the [local test suite](index.md#Local-development-and-tests) and only
 publishes from `main`.
 
 ## Repository setup

@@ -1,10 +1,14 @@
-# Cloudflare
+# Deployment Guide
 
-This guide deploys Web and MCP together using the configuration under
-`deploy/web/cloudflare/` and `deploy/mcp/cloudflare/`. Both Workers use the Node
-project and lockfile in `deploy/`; Docker builds use the repository root as
-context. See [Authentication Design](../authentication-design.md#Cloudflare-MCP:-OAuth-PKCE)
+This guide deploys Web and MCP together on Cloudflare for multiple users, using
+the configuration under `deploy/web/cloudflare/` and `deploy/mcp/cloudflare/`.
+Both Workers use the Node project and lockfile in `deploy/`; Docker builds use
+the repository root as context. See [Authentication Design](auth.md)
 for the OAuth flow and credential boundaries.
+
+For local use, start with the [Quick Start](../index.md#Quick-Start) or the
+[User Guide](../user.md). The [repository layout](index.md#Repository-layout)
+identifies the application code, launchers, and provider configuration files.
 
 ## Prerequisites the account owner supplies
 
@@ -103,34 +107,67 @@ npm run deploy:mcp
 npm run deploy:web
 ```
 
-Run the [deployment tests](../developer.md#Deployment-tests) before publishing.
+Run the [deployment tests](index.md#Deployment-tests) before publishing.
 `deploy:*` builds the images and publishes the Worker/container. The MCP deployment
-must be ready before Web creation can use its shared operation store. All deployments use the same
-checkout, including uncommitted changes if run locally; use a reviewed commit.
+must be ready before Web creation can use its shared operation store. All
+deployments use the same checkout, including uncommitted changes if run locally;
+use a reviewed commit.
 
 The `Cloudflare` GitHub Actions workflow tests Workers and builds both Linux
 images on relevant changes. It does not publish them. For unattended deployment,
 use Cloudflare account-scoped CI credentials instead of `wrangler login` and
 follow Cloudflare's [Containers deployment guide](https://developers.cloudflare.com/containers/guides/deploy-containers/).
 
-## Verify the deployed service
+## Web request controls
+
+The Web Worker overwrites `X-Real-IP` with Cloudflare's client address and
+authenticates forwarding with `WEB_PROXY_SECRET`. The Julia container rejects
+requests without that gateway credential. Browser Origin headers must match
+`PUBLIC_ORIGIN`; requests without Origin still require the caller's GitHub
+authorization for repository operations.
+
+The Web application accepts JSON objects for POST endpoints, limits request
+bodies to 64 KiB, active connections to 128, and concurrent repository operations
+to eight. Its fixed-window limits apply per 60 seconds:
+
+| Scope | Limit |
+| --- | ---: |
+| API requests per client IP (excluding health checks) | 120 |
+| OAuth starts per client IP | 6 |
+| OAuth polls per client IP | 60 |
+| Creation attempts per token fingerprint | 5 |
+
+Rate-limit responses use HTTP 429. These in-memory counters reset on container
+restart; edge limits are configured separately in the Wrangler files. They bound
+request volume, not monthly cost.
+
+## Acceptance checks
 
 OAuth discovery, dynamic registration, and token endpoints accept browser CORS
 requests through the OAuth provider. `/mcp`, including preflights, validates
 `MCP_ALLOWED_ORIGINS`; consent and callback routes keep the same-origin policy
 and browser-bound CSRF checks. Bearer tokens are still required for MCP calls.
 
-Complete the [common acceptance checks](index.md#Acceptance-checks), then verify
-these Cloudflare-specific behaviors:
+Before admitting users, exercise both HTTPS interfaces with authorized test
+accounts:
 
-1. Connect an OAuth-capable MCP client to `MCP_ORIGIN/mcp`. Discovery supports
-   dynamic client registration and Client ID Metadata Documents. Confirm the
-   client name/destination on the consent page, then sign in with GitHub.
+1. Complete the [hosted MCP login](../user.md#Hosted-service) and the Web login.
+   Check MCP discovery with the client's registration method; the service
+   supports dynamic client registration and Client ID Metadata Documents.
 2. List tools and preview a `minimum` package. Wait more than five idle minutes,
    then execute the saved plan **before it expires**. The exact files
    and UUID must survive a container restart.
 3. Use two GitHub accounts to verify isolation. An account must not execute
-   another account's `plan_id`. Repeating a completed plan returns its saved result.
+   another account's `plan_id`. Repeat a completed plan to verify the
+   [plan lifecycle](../user.md#Plan-lifecycle).
+4. Test concurrent users, revoked credentials, GitHub throttling, lost responses,
+   and a restart during creation. Inspect the created repositories and their
+   workflows, and exercise the [recovery procedure](../user.md#Resuming-an-interrupted-setup).
+
+Measure cold starts, request latency, and peak memory under expected load before
+choosing resource limits. The [local tests](index.md#Local-development-and-tests)
+use simulated GitHub responses; they cannot establish that deployed credentials,
+domains, or upstream permissions are configured correctly.
 
 Streamable HTTP uses stateless POST requests and JSON responses. The optional
 GET/SSE channel returns 405. No MCP session ID needs to survive a container
@@ -148,12 +185,12 @@ to verify that the shipped caches work without generating replacements.
 
 ## Persistence, failures, and recovery
 
-Both apps initially route to one named container each, with `max_instances: 1`
-and a five-minute idle timeout. No always-on keepalive is configured. Static Web
-requests and MCP OAuth discovery do not start Julia. Sleep and deployments clear
-container memory/disk, but not Durable Object storage.
+Each service handles multiple users in one named container, with
+`max_instances: 1` and a five-minute idle timeout. No always-on keepalive is
+configured. Static Web requests and MCP OAuth discovery do not start Julia.
+Sleep and deployments clear container memory/disk, but not Durable Object storage.
 
-The [MCP plan lifetime](../mcp.md#Plan-lifecycle) also applies here. The durable
+The [MCP plan lifetime](../user.md#Plan-lifecycle) also applies here. The durable
 store allows at most 16 retained plans per authenticated principal and 256 across
 all users, with a 100 KB snapshot limit. Successful results remain available for
 a fresh plan lifetime measured from completion.
@@ -163,7 +200,9 @@ Interrupted running plans remain blocked for operator recovery.
 Repository locks apply across Web and MCP and do not expire automatically. This
 prevents a slow or disconnected first request from writing concurrently with a
 retry. A crash, lost lock-release response, or state-service outage can leave a
-lock behind. No request automatically replays GitHub writes.
+lock behind. GitHub calls have connect/read timeouts and do not automatically
+retry writes or follow redirects. A browser timeout does not cancel an operation
+already accepted by the server.
 
 Cleanup and plan-recording errors never replace a successful creation result or
 the original creation error. Successful responses retain the repository URL and
@@ -202,18 +241,18 @@ recovery; a health response cannot prove that an earlier request stopped running
 
 Do not delete the `ApplicationState` namespace or change its class/name during
 ordinary releases. That would discard plan history and repository exclusion.
-Rate limits are applied at the edge and inside Web; they are not a monthly cost
-cap. Logs are disabled by default to avoid recording OAuth callback URLs or
-credentials. Enable only redacted operational logging if adding observability.
+Worker observability is disabled by default to avoid recording OAuth callback
+URLs or credentials. Web application request logs contain only a generated
+request ID, a known route, HTTP status, and duration. Keep Authorization headers,
+request bodies, and OAuth response bodies out of logs when adding observability.
 
 ## Cost estimate (rates checked 2026-09-26)
 
 The configuration uses **two `basic` instances** (each 1 GiB RAM,
 0.25 vCPU, 4 GB disk). Memory/disk are charged for provisioned capacity while
-running; CPU is charged for actual use. Idle containers stop after five minutes.
-Cloudflare Containers **do not support swap**. Saving a rendered plan in the
-Durable Object allows Julia to shut down completely between visits; restarting
-does not require keeping its heap or a swap file alive.
+running; CPU is charged for actual use. Cloudflare Containers **do not support
+swap**. For the idle timeout and retained state, see
+[Persistence, failures, and recovery](#Persistence,-failures,-and-recovery).
 
 | Item | Included in Workers Paid | Additional usage |
 | --- | --- | --- |

@@ -2,7 +2,7 @@
 
 The flows below describe the implementation in this checkout, not the deployment
 status of a hosted service. For the boundaries between the core and applications,
-see [Repository layout](developer.md#Repository-layout).
+see [Repository layout](index.md#Repository-layout).
 
 ## Methods and adoption
 
@@ -18,7 +18,7 @@ prototype is not adopted.
 | OAuth + PKCE (local callback) | No manual copying | Bundled secret is public; callback restrictions | - |
 | OAuth + PKCE (HTTPS callback) | No manual copying; per-user login | Requires authentication server and secret management | Current: Cloudflare MCP; Planned: Online Web UI |
 | Device Flow | No client secret or callback | Requires manual copying | Current: Local CLI, Local Web UI, hosted Web UI (including Cloudflare) |
-| Personal Access Token (PAT) | No callback; supports automation | Requires manual copying and token management | Current: Local CLI, Local MCP, single-operator HTTP MCP GitHub access |
+| Personal Access Token (PAT) | No callback; supports automation | Requires manual copying and token management | Current: Local CLI, Local MCP |
 
 “Authentication server” means a server run by the operator. “Manual copying”
 refers to app authentication codes or tokens, excluding GitHub login and MFA.
@@ -70,8 +70,8 @@ on success or an error such as denial or expiry.
 The browser keeps the GitHub token in its tab's memory and sends it as
 `Authorization: Bearer ...` for repository operations. The Web server does not
 persist it. Closing the tab clears that copy without revoking the GitHub grant.
-See [GitHub authentication](user.md#GitHub-authentication) for usage and
-[Standalone Web](deployment/web.md) for deployment controls.
+See [GitHub authentication](../user.md#GitHub-authentication) for usage and
+[Web request controls](deployment.md#Web-request-controls) for deployment controls.
 
 ## Cloudflare MCP: OAuth + PKCE
 
@@ -143,9 +143,9 @@ constructs a per-user `Credential`. Plan ownership uses the verified GitHub
 identity. GitHub tokens never become tool arguments or plan records; the
 ApplicationState Durable Object stores plans, results, and repository locks
 separately from OAuth grants in KV. Client approval is described in the
-[MCP tool workflow](mcp.md#Tools).
+[MCP tool workflow](../user.md#Tools).
 
 Service credentials isolate container forwarding, plan storage, Web repository
 locks, and operator recovery. Their roles, configuration, and rotation are
-defined in [Cloudflare deployment](deployment/cloudflare.md#Configure-and-deploy).
-For the other transports, see the [MCP Guide](mcp.md).
+defined in the [Deployment Guide](deployment.md#Configure-and-deploy).
+For connection instructions, see the [MCP interface](../user.md#MCP-interface).

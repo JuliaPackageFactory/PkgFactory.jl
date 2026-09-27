@@ -32,18 +32,12 @@ makedocs(;
     pages = [
         "Home" => "index.md",
         "User Guide" => "user.md",
-        "MCP Guide" => "mcp.md",
         "Developer Guide" => [
-            "Development Workflow" => "developer.md",
-            "Authentication Design" => "authentication-design.md",
+            "Development Workflow" => "developer/index.md",
+            "Authentication Design" => "developer/auth.md",
             "Template Design" => "developer/templates.md",
-            "Template Repository Tests" => "developer/template-tests.md",
-        ],
-        "Deployment" => [
-            "Deployment Overview" => "deployment/index.md",
-            "Standalone Web" => "deployment/web.md",
-            "Cloudflare" => "deployment/cloudflare.md",
-            "Render" => "deployment/render.md",
+            "Template E2E Tests" => "developer/e2e.md",
+            "Deployment Guide" => "developer/deployment.md",
         ],
         "API Reference" => "api.md",
     ],

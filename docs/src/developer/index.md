@@ -1,10 +1,10 @@
 # Development Workflow
 
 This guide covers development of PkgFactory itself. To work on a generated
-package, see the [User Guide](user.md).
+package, see the [User Guide](../user.md).
 
 This page covers the repository layout, local tests, and documentation builds.
-To operate a hosted service, use the [Deployment Overview](deployment/index.md).
+To operate the hosted Web and MCP services, use the [Deployment Guide](deployment.md).
 
 Run all commands from the repository root unless a command changes directory.
 
@@ -44,9 +44,7 @@ names with hyphens. Keep ecosystem filenames such as `Project.toml`,
 Keep application implementations and launchers in `apps/<app>/`, and hosting
 definitions in `deploy/<app>/<provider>/`. Shared application adapters belong
 in `apps/shared/`; shared deployment code belongs in `deploy/shared/<provider>/`.
-Deployment scripts and tests follow the same provider grouping. See the
-[Deployment Overview](deployment/index.md)
-for the available targets and commands.
+Deployment scripts and tests follow the same provider grouping.
 
 Keep shared behavior in `PackageSpec`, `package_schema`, `plan_package`, and
 `create_package`. Applications collect input, manage authentication, and present
@@ -85,7 +83,7 @@ julia --project=apps/APP --startup-file=no -e 'import Pkg; Pkg.test()'
 Default tests use simulated GitHub responses and local transports. They do not
 create GitHub repositories. Run browser input tests with
 `node apps/web/test/browser.cjs`. The separate
-[template repository tests](developer/template-tests.md) publish to GitHub.
+[Template E2E Tests](e2e.md) publish to GitHub.
 
 To open a development REPL:
 
@@ -108,7 +106,7 @@ cd ..
 
 `check` bundles both Workers without deploying them or building container images.
 For the container checks used by CI, see
-[Reproduce the local memory measurement](deployment/cloudflare.md#Reproduce-the-local-memory-measurement).
+[Reproduce the local memory measurement](deployment.md#Reproduce-the-local-memory-measurement).
 
 ## Building documentation
 

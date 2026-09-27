@@ -45,6 +45,6 @@ separate design and file format.
 
 ## Validating changes
 
-Run the core tests described in the [Developer Guide](../developer.md#Local-development-and-tests).
+Run the core tests described in the [Developer Guide](index.md#Local-development-and-tests).
 To publish and test the generated examples, use the separate
-[Template Repository Tests](template-tests.md) workflow.
+[Template E2E Tests](e2e.md) workflow.

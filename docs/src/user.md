@@ -45,7 +45,7 @@ remote availability.
 The browser uses GitHub's device login: authorize the displayed code in GitHub
 and return to the form. It requests `repo`, `workflow`, `read:user`, and
 `read:org` permissions to create repositories, commit workflows, and list owners.
-See [Authentication Design](authentication-design.md#CLI-and-Web-UI:-Device-Flow)
+See [Authentication Design](developer/auth.md#CLI-and-Web-UI:-Device-Flow)
 for token handling and the underlying protocol.
 
 The terminal also supports device login. For scripts, supply a GitHub token
@@ -156,6 +156,140 @@ println(result["url"])
 
 See the [example notebook](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/examples/PkgFactory.ipynb)
 for the same workflow in Jupyter, and the [API Reference](api.md) for function details.
+
+## MCP interface
+
+The MCP interface is the `PkgFactoryMCP` Julia application in `apps/mcp/`.
+It supports local stdio and authenticated Streamable HTTP through
+[ModelContextProtocol.jl](https://github.com/JuliaSMLM/ModelContextProtocol.jl).
+
+### Hosted service
+
+Add the service's HTTPS `/mcp` URL to an OAuth-capable MCP client. Confirm the
+client name and redirect destination on the consent page, then sign in with
+your own GitHub account. Repository operations use that account's permissions.
+The hosting configuration is documented in the [Deployment Guide](developer/deployment.md).
+
+### Local stdio
+
+[Get the source](index.md#Get-the-source), then run these commands from the
+repository root:
+
+```sh
+julia --project=apps/mcp --startup-file=no -e 'using Pkg; Pkg.instantiate()'
+julia --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl --read-only
+```
+
+The final command waits for MCP messages on stdin. Configure your MCP client to
+launch it; this is not an interactive Julia REPL. Omit `--read-only` to enable
+repository creation and supply `GITHUB_TOKEN` (or `GH_TOKEN`) in the server's
+environment. The token is only read when creation is requested.
+
+For clients using the `mcpServers` configuration format:
+
+```json
+{
+  "mcpServers": {
+    "pkgfactory": {
+      "command": "julia",
+      "args": [
+        "--project=/absolute/path/to/PkgFactory.jl/apps/mcp",
+        "--startup-file=no",
+        "/absolute/path/to/PkgFactory.jl/apps/mcp/bin/pkgfactory-mcp.jl"
+      ]
+    }
+  }
+}
+```
+
+Provide credentials through your client's secret/environment settings. On
+Windows, forward slashes work in these paths. Logs go to stderr; stdout is
+reserved for MCP messages. Allow enough startup time for Julia's first load.
+
+### Tools
+
+| Tool | Input | Result |
+| --- | --- | --- |
+| `list_templates` | `{}` | Available template names |
+| `preview_package` | Package settings | Saved `plan_id`, normalized repository, visibility, and planned filenames |
+| `create_package` | `{"plan_id": "..."}` | Repository URL and whether setup was resumed |
+
+Example input to `preview_package`:
+
+```json
+{
+  "owner": "octocat",
+  "name": "MyPackage",
+  "authors": ["The Octocat"],
+  "description": "A package for my research",
+  "template": "minimum",
+  "visibility": "private"
+}
+```
+
+Input fields, defaults, and preview validation follow the shared
+[package settings](#Package-settings).
+
+Present the preview to the user and execute only within their authorization.
+Creation accepts the saved plan ID, so settings cannot be changed between
+preview and execution. The client controls user approval: a plan ID itself is
+not proof of human consent.
+
+### Plan lifecycle
+
+Plans expire 15 minutes after preview by default. A completed plan returns its
+cached result on a repeat call while retained. An in-flight or failed plan cannot
+be executed again. Different previews create different plans; this does not
+provide global repository deduplication. For failed creation, follow
+[Resuming an interrupted setup](#Resuming-an-interrupted-setup).
+
+Local stdio keeps plans in process memory, so restarting clears them. The hosted
+Cloudflare service uses a [durable store](developer/deployment.md#Persistence,-failures,-and-recovery)
+with quotas and recovery controls.
+
+Tools execute synchronously. Account for creation time in the client's request
+timeout; long-running jobs require a persistent operation store and a worker.
+
+### Julia API
+
+```julia
+using PkgFactoryMCP
+
+server = build_server(enable_create = false) # no process started
+serve_stdio()                              # blocks until client disconnects
+```
+
+The default in-memory store retains up to 256 plans. Configure `plan_ttl` and
+`max_plans` in `build_server` to change its lifetime and capacity.
+
+Applications hosting multiple users can call:
+
+```julia
+serve_http(
+    auth = oauth_middleware,
+    resource_metadata = oauth_resource_metadata,
+    backend_resolver = ctx -> github_backend_for(ctx.authenticated_user),
+    enable_create = true,
+)
+```
+
+The application implements `github_backend_for` and returns a
+`PkgFactory.Credential` holding that user's GitHub token. HTTP does not
+implicitly fall back to the server's environment token. Plan access is tied to
+the verified identity. Account linking and a durable credential/operation store
+are application responsibilities; use the
+[Cloudflare integration](developer/deployment.md) for the included implementation.
+
+For application tests and development commands, see
+[Development Workflow](developer/index.md#Local-development-and-tests).
+Streamable HTTP follows the
+[standard transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
+
+### Acknowledgments
+
+This application was imported from JuliaPackageFactory/PkgFactoryMCP.jl
+at commit `0b16c0d106607e8dbdf47b4245a1d50189eb60a2`. The original
+[MIT license](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/apps/mcp/LICENSE) is retained.
 
 ## Resuming an interrupted setup
 

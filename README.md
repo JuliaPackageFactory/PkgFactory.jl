@@ -11,15 +11,10 @@ This package automates repository creation and package infrastructure deployment
 
 - [Home](https://juliapackagefactory.github.io/PkgFactory.jl/dev/)
 - [User Guide](https://juliapackagefactory.github.io/PkgFactory.jl/dev/user/)
-- [MCP Guide](https://juliapackagefactory.github.io/PkgFactory.jl/dev/mcp/)
 - Developer Guide
   - [Development Workflow](https://juliapackagefactory.github.io/PkgFactory.jl/dev/developer/)
-  - [Authentication Design](https://juliapackagefactory.github.io/PkgFactory.jl/dev/authentication-design/)
+  - [Authentication Design](https://juliapackagefactory.github.io/PkgFactory.jl/dev/developer/auth/)
   - [Template Design](https://juliapackagefactory.github.io/PkgFactory.jl/dev/developer/templates/)
-  - [Template Repository Tests](https://juliapackagefactory.github.io/PkgFactory.jl/dev/developer/template-tests/)
-- Deployment
-  - [Deployment Overview](https://juliapackagefactory.github.io/PkgFactory.jl/dev/deployment/)
-  - [Standalone Web](https://juliapackagefactory.github.io/PkgFactory.jl/dev/deployment/web/)
-  - [Cloudflare](https://juliapackagefactory.github.io/PkgFactory.jl/dev/deployment/cloudflare/)
-  - [Render](https://juliapackagefactory.github.io/PkgFactory.jl/dev/deployment/render/)
+  - [Template E2E Tests](https://juliapackagefactory.github.io/PkgFactory.jl/dev/developer/e2e/)
+  - [Deployment Guide](https://juliapackagefactory.github.io/PkgFactory.jl/dev/developer/deployment/)
 - [API Reference](https://juliapackagefactory.github.io/PkgFactory.jl/dev/api/)
