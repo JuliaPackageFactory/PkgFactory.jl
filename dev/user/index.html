@@ -5,7 +5,7 @@
     "https://cdn.jsdelivr.net/npm/mermaid@11.16.1/dist/mermaid.esm.min.mjs"
 }}
 </script>
-</head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="PkgFactory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">PkgFactory.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>User Guide</a><ul class="internal"><li><a class="tocitem" href="#Interfaces"><span>Interfaces</span></a></li><li><a class="tocitem" href="#Local-Setup"><span>Local Setup</span></a></li></ul></li><li><span class="tocitem">Developer Guide</span><ul><li><a class="tocitem" href="../developer/">Development Workflow</a></li><li><a class="tocitem" href="../developer/auth/">Authentication Design</a></li><li><a class="tocitem" href="../developer/templates/">Template Design</a></li><li><a class="tocitem" href="../developer/e2e/">Template E2E Tests</a></li><li><a class="tocitem" href="../developer/deployment/">Deployment Guide</a></li></ul></li><li><a class="tocitem" href="../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>User Guide</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>User Guide</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaPackageFactory/PkgFactory.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/docs/src/user.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="User-Guide"><a class="docs-heading-anchor" href="#User-Guide">User Guide</a><a id="User-Guide-1"></a><a class="docs-heading-anchor-permalink" href="#User-Guide" title="Permalink"></a></h1><p>To create your first package in a browser, follow the <a href="../#Quick-Start">Quick Start</a>.</p><h2 id="Interfaces"><a class="docs-heading-anchor" href="#Interfaces">Interfaces</a><a id="Interfaces-1"></a><a class="docs-heading-anchor-permalink" href="#Interfaces" title="Permalink"></a></h2><p>PkgFactory.jl can be used through:</p><ul><li><strong>CLI</strong> (local) — create packages from the terminal</li><li><strong>Web UI</strong> (local &amp; <a href="https://pkgfactory-web.ohnolab.workers.dev/">hosted</a>) — create and configure packages from a browser</li><li><strong>MCP</strong> (stdio &amp; Streamable HTTP) — create packages from AI applications</li></ul><h2 id="Local-Setup"><a class="docs-heading-anchor" href="#Local-Setup">Local Setup</a><a id="Local-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Local-Setup" title="Permalink"></a></h2><p>For CLI:</p><pre><code class="language-sh hljs">git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
+</head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="PkgFactory.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">PkgFactory.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>User Guide</a><ul class="internal"><li><a class="tocitem" href="#Interfaces"><span>Interfaces</span></a></li><li><a class="tocitem" href="#Local-Setup"><span>Local Setup</span></a></li><li><a class="tocitem" href="#Choosing-a-template"><span>Choosing a template</span></a></li><li><a class="tocitem" href="#Package-settings"><span>Package settings</span></a></li><li><a class="tocitem" href="#After-creation"><span>After creation</span></a></li><li><a class="tocitem" href="#Terminal-interface"><span>Terminal interface</span></a></li><li><a class="tocitem" href="#Julia-and-notebooks"><span>Julia and notebooks</span></a></li><li><a class="tocitem" href="#MCP-interface"><span>MCP interface</span></a></li><li><a class="tocitem" href="#Resuming-an-interrupted-setup"><span>Resuming an interrupted setup</span></a></li></ul></li><li><span class="tocitem">Developer Guide</span><ul><li><a class="tocitem" href="../developer/">Development Workflow</a></li><li><a class="tocitem" href="../developer/auth/">Authentication Design</a></li><li><a class="tocitem" href="../developer/templates/">Template Design</a></li><li><a class="tocitem" href="../developer/e2e/">Template E2E Tests</a></li><li><a class="tocitem" href="../developer/deployment/">Deployment Guide</a></li></ul></li><li><a class="tocitem" href="../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>User Guide</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>User Guide</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaPackageFactory/PkgFactory.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/docs/src/user.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="User-Guide"><a class="docs-heading-anchor" href="#User-Guide">User Guide</a><a id="User-Guide-1"></a><a class="docs-heading-anchor-permalink" href="#User-Guide" title="Permalink"></a></h1><p>To create your first package in a browser, follow the <a href="../#Quick-Start">Quick Start</a>.</p><h2 id="Interfaces"><a class="docs-heading-anchor" href="#Interfaces">Interfaces</a><a id="Interfaces-1"></a><a class="docs-heading-anchor-permalink" href="#Interfaces" title="Permalink"></a></h2><p>PkgFactory.jl can be used through:</p><ul><li><strong>CLI</strong> (local) — create packages from the terminal</li><li><strong>Web UI</strong> (local &amp; <a href="https://pkgfactory-web.ohnolab.workers.dev/">hosted</a>) — create and configure packages from a browser</li><li><strong>MCP</strong> (stdio &amp; Streamable HTTP) — create packages from AI applications</li></ul><h2 id="Local-Setup"><a class="docs-heading-anchor" href="#Local-Setup">Local Setup</a><a id="Local-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Local-Setup" title="Permalink"></a></h2><p>For CLI:</p><pre><code class="language-sh hljs">git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
 cd PkgFactory.jl
 julia +1.12 --project=apps/cli --startup-file=no -e &#39;import Pkg; Pkg.instantiate()&#39;
 julia +1.12 --project=apps/cli --startup-file=no apps/cli/bin/pkgfactory.jl</code></pre><p>For Web UI:</p><pre><code class="language-sh hljs">git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
@@ -14,214 +14,55 @@ julia +1.12 --project=apps/web --startup-file=no -e &#39;import Pkg; Pkg.instant
 julia +1.12 --project=apps/web --startup-file=no apps/web/bin/pkgfactory-web.jl</code></pre><p>For MCP:</p><pre><code class="language-sh hljs">git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
 cd PkgFactory.jl
 julia +1.12 --project=apps/mcp --startup-file=no -e &#39;import Pkg; Pkg.instantiate()&#39;
-julia +1.12 --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl --read-only
+julia +1.12 --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl --read-only</code></pre><h2 id="Choosing-a-template"><a class="docs-heading-anchor" href="#Choosing-a-template">Choosing a template</a><a id="Choosing-a-template-1"></a><a class="docs-heading-anchor-permalink" href="#Choosing-a-template" title="Permalink"></a></h2><p>All templates include a Julia module, tests, <code>Project.toml</code>, a README, an MIT license, and GitHub Actions CI. The generated packages require Julia 1.12 or later.</p><table><tr><th style="text-align: left">Template</th><th style="text-align: left">Included features</th><th style="text-align: left">Generated example</th></tr><tr><td style="text-align: left"><code>minimum</code></td><td style="text-align: left">Package files and CI</td><td style="text-align: left"><a href="https://github.com/JuliaPackageFactory/TemplateMinimum.jl">TemplateMinimum.jl</a></td></tr><tr><td style="text-align: left"><code>simple</code></td><td style="text-align: left">Documentation with Documenter, Codecov coverage, and TagBot releases</td><td style="text-align: left"><a href="https://github.com/JuliaPackageFactory/TemplateSimple.jl">TemplateSimple.jl</a></td></tr><tr><td style="text-align: left"><code>all-in-one</code> (default)</td><td style="text-align: left">Documentation, coverage, TagBot, Aqua, JET, ExplicitImports, formatting, Dependabot, citation metadata, and a notebook example</td><td style="text-align: left"><a href="https://github.com/JuliaPackageFactory/TemplateAllInOne.jl">TemplateAllInOne.jl</a></td></tr></table><p>You can edit the generated files after creation.</p><h2 id="Package-settings"><a class="docs-heading-anchor" href="#Package-settings">Package settings</a><a id="Package-settings-1"></a><a class="docs-heading-anchor-permalink" href="#Package-settings" title="Permalink"></a></h2><p>These settings apply to the browser, terminal, Julia API, and MCP:</p><table><tr><th style="text-align: left">Setting</th><th style="text-align: left">What to enter</th><th style="text-align: left">Default</th></tr><tr><td style="text-align: left">Owner</td><td style="text-align: left">Your GitHub login or an organization where you can create repositories</td><td style="text-align: left">Required</td></tr><tr><td style="text-align: left">Name</td><td style="text-align: left">A Julia package name, such as <code>MyPkg</code>; the repository becomes <code>MyPkg.jl</code></td><td style="text-align: left">Required</td></tr><tr><td style="text-align: left">Authors</td><td style="text-align: left">Names for the package metadata and license; comma-separated in the browser and interactive CLI</td><td style="text-align: left">Required</td></tr><tr><td style="text-align: left">Description</td><td style="text-align: left">A short description of the package</td><td style="text-align: left">Empty</td></tr><tr><td style="text-align: left">Template</td><td style="text-align: left"><code>minimum</code>, <code>simple</code>, or <code>all-in-one</code></td><td style="text-align: left"><code>all-in-one</code></td></tr><tr><td style="text-align: left">Visibility</td><td style="text-align: left"><code>public</code> or <code>private</code></td><td style="text-align: left"><code>public</code></td></tr><tr><td style="text-align: left">Commit message</td><td style="text-align: left">Message for the initial template commit</td><td style="text-align: left"><code>Using PkgFactory.jl</code></td></tr><tr><td style="text-align: left">Resume</td><td style="text-align: left">Continue an interrupted creation using the original settings</td><td style="text-align: left"><code>false</code></td></tr></table><p>PkgFactory accepts names with or without <code>.jl</code>. The package name must use ASCII letters and digits, start with an uppercase letter, include a lowercase letter, and contain at least five characters. Underscores, hyphens, <code>Julia</code> or <code>julia</code>, a <code>Ju</code> prefix, and a <code>jl</code> ending are rejected.</p><p>The browser checks whether the repository name is already in use under the selected owner. Check General separately if you intend to register the package. An offline preview validates the inputs and renders files; it does not check remote availability.</p><h3 id="GitHub-authentication"><a class="docs-heading-anchor" href="#GitHub-authentication">GitHub authentication</a><a id="GitHub-authentication-1"></a><a class="docs-heading-anchor-permalink" href="#GitHub-authentication" title="Permalink"></a></h3><p>The browser uses GitHub&#39;s device login: authorize the displayed code in GitHub and return to the form. It requests <code>repo</code>, <code>workflow</code>, <code>read:user</code>, and <code>read:org</code> permissions to create repositories, commit workflows, and list owners. See <a href="../developer/auth/#CLI-and-Web-UI:-Device-Flow">Authentication Design</a> for token handling and the underlying protocol.</p><p>The terminal also supports device login. For scripts, supply a GitHub token that can create repositories and write their files and workflows. A classic PAT needs <code>repo</code> and <code>workflow</code>; organization policies or SSO may require additional authorization. Templates with documentation also need access to deploy keys and repository secrets.</p><h2 id="After-creation"><a class="docs-heading-anchor" href="#After-creation">After creation</a><a id="After-creation-1"></a><a class="docs-heading-anchor-permalink" href="#After-creation" title="Permalink"></a></h2><p>Open the new repository&#39;s <strong>Actions</strong> tab to check its first CI run. To start working locally, replace <code>OWNER</code> and <code>MyPkg</code> below with your chosen values:</p><pre><code class="language-sh hljs">git clone https://github.com/OWNER/MyPkg.jl.git
+cd MyPkg.jl
+julia --project=. --startup-file=no -e &#39;import Pkg; Pkg.instantiate(); Pkg.test()&#39;</code></pre><p>Edit <code>src/MyPkg.jl</code> and add tests in <code>test/runtests.jl</code>.</p><h3 id="Documentation-and-coverage"><a class="docs-heading-anchor" href="#Documentation-and-coverage">Documentation and coverage</a><a id="Documentation-and-coverage-1"></a><a class="docs-heading-anchor-permalink" href="#Documentation-and-coverage" title="Permalink"></a></h3><p>For <code>simple</code> and <code>all-in-one</code>, select <strong>Deploy from a branch</strong>, <code>gh-pages</code>, and <code>/ (root)</code> in the repository&#39;s <strong>Settings → Pages</strong>. PkgFactory creates that branch and the Documenter key; the generated CI workflow builds and publishes the documentation. Edit its content under <code>docs/src/</code>.</p><p>Sign in to <a href="https://app.codecov.io/">Codecov</a> and grant its <a href="https://github.com/apps/codecov">GitHub App</a> access to the new repository. The generated CI uses <a href="https://github.com/codecov/codecov-action#using-oidc">GitHub OIDC</a> for coverage uploads, so no <code>CODECOV_TOKEN</code> is needed. These steps do not apply to <code>minimum</code>.</p><h3 id="Registering-a-release"><a class="docs-heading-anchor" href="#Registering-a-release">Registering a release</a><a id="Registering-a-release-1"></a><a class="docs-heading-anchor-permalink" href="#Registering-a-release" title="Permalink"></a></h3><p>Creating a repository does not register the package in Julia&#39;s General registry. When the package is ready, follow the <a href="https://github.com/JuliaRegistries/General#registering-a-package-in-general">General registration guide</a> and enable the <a href="https://github.com/apps/juliaregistrator">Registrator GitHub App</a> for the repository. The <code>simple</code> and <code>all-in-one</code> templates include TagBot to create tags and GitHub releases after registration.</p><h2 id="Terminal-interface"><a class="docs-heading-anchor" href="#Terminal-interface">Terminal interface</a><a id="Terminal-interface-1"></a><a class="docs-heading-anchor-permalink" href="#Terminal-interface" title="Permalink"></a></h2><p>From the PkgFactory checkout in <a href="../#Get-the-source">Get the source</a>, run:</p><pre><code class="language-sh hljs">julia --project=apps/cli --startup-file=no -e &#39;import Pkg; Pkg.instantiate()&#39;
+julia --project=apps/cli --startup-file=no apps/cli/bin/pkgfactory.jl</code></pre><p>Answer the prompts for package settings, review the file list, and confirm creation with <code>y</code>. Press Enter to accept a displayed default. The CLI reads <code>GITHUB_TOKEN</code>, falling back to <code>GH_TOKEN</code> when it is unset; without a token, it prints instructions for GitHub device login.</p><p>To preview a package without authenticating or creating a repository:</p><pre><code class="language-sh hljs">julia --project=apps/cli --startup-file=no apps/cli/bin/pkgfactory.jl --owner octocat --name MyPkg --author &quot;The Octocat&quot; --template minimum --visibility private --preview</code></pre><p>Remove <code>--preview</code> to create it. Repeat <code>--author</code> for multiple authors. Use <code>--yes</code> to skip the creation confirmation when scripting, and <code>--help</code> to list all options. Missing required settings are prompted for; omitted optional settings use the defaults in the table above.</p><h2 id="Julia-and-notebooks"><a class="docs-heading-anchor" href="#Julia-and-notebooks">Julia and notebooks</a><a id="Julia-and-notebooks-1"></a><a class="docs-heading-anchor-permalink" href="#Julia-and-notebooks" title="Permalink"></a></h2><p>Install PkgFactory in your Julia environment:</p><pre><code class="language-julia hljs">import Pkg
+Pkg.add(url=&quot;https://github.com/JuliaPackageFactory/PkgFactory.jl.git&quot;)</code></pre><p>Prepare and inspect the files before creating a repository:</p><pre><code class="language-julia hljs">using PkgFactory
 
-## Choosing a template
+spec = PackageSpec(
+    owner=&quot;octocat&quot;,
+    name=&quot;MyPkg&quot;,
+    authors=[&quot;The Octocat&quot;],
+    description=&quot;A package for my research&quot;,
+    template=&quot;simple&quot;,
+    visibility=&quot;public&quot;,
+)
+plan = plan_package(spec)
+display(plan)
+files = Dict(plan.contents)
+println(files[&quot;Project.toml&quot;])</code></pre><p>Planning needs no credentials and makes no network requests. The plan contains the generated filenames and contents, including the package UUID.</p><p>Set <code>GITHUB_TOKEN</code> in the Julia process&#39;s environment before running the next cell. This call creates the GitHub repository using the files you previewed:</p><pre><code class="language-julia hljs">credential = Credential(ENV[&quot;GITHUB_TOKEN&quot;])
+result = create_package(credential, plan)
+println(result[&quot;url&quot;])</code></pre><p>See the <a href="https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/examples/PkgFactory.ipynb">example notebook</a> for the same workflow in Jupyter, and the <a href="../api/">API Reference</a> for function details.</p><h2 id="MCP-interface"><a class="docs-heading-anchor" href="#MCP-interface">MCP interface</a><a id="MCP-interface-1"></a><a class="docs-heading-anchor-permalink" href="#MCP-interface" title="Permalink"></a></h2><p>The MCP interface is the <code>PkgFactoryMCP</code> Julia application in <code>apps/mcp/</code>. It supports local stdio and authenticated Streamable HTTP through <a href="https://github.com/JuliaSMLM/ModelContextProtocol.jl">ModelContextProtocol.jl</a>.</p><h3 id="Hosted-service"><a class="docs-heading-anchor" href="#Hosted-service">Hosted service</a><a id="Hosted-service-1"></a><a class="docs-heading-anchor-permalink" href="#Hosted-service" title="Permalink"></a></h3><p>Add the service&#39;s HTTPS <code>/mcp</code> URL to an OAuth-capable MCP client. Confirm the client name and redirect destination on the consent page, then sign in with your own GitHub account. Repository operations use that account&#39;s permissions. The hosting configuration is documented in the <a href="../developer/deployment/">Deployment Guide</a>.</p><h3 id="Local-stdio"><a class="docs-heading-anchor" href="#Local-stdio">Local stdio</a><a id="Local-stdio-1"></a><a class="docs-heading-anchor-permalink" href="#Local-stdio" title="Permalink"></a></h3><p><a href="../#Get-the-source">Get the source</a>, then run these commands from the repository root:</p><pre><code class="language-sh hljs">julia --project=apps/mcp --startup-file=no -e &#39;using Pkg; Pkg.instantiate()&#39;
+julia --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl --read-only</code></pre><p>The final command waits for MCP messages on stdin. Configure your MCP client to launch it; this is not an interactive Julia REPL. Omit <code>--read-only</code> to enable repository creation and supply <code>GITHUB_TOKEN</code> (or <code>GH_TOKEN</code>) in the server&#39;s environment. The token is only read when creation is requested.</p><p>For clients using the <code>mcpServers</code> configuration format:</p><pre><code class="language-json hljs">{
+  &quot;mcpServers&quot;: {
+    &quot;pkgfactory&quot;: {
+      &quot;command&quot;: &quot;julia&quot;,
+      &quot;args&quot;: [
+        &quot;--project=/absolute/path/to/PkgFactory.jl/apps/mcp&quot;,
+        &quot;--startup-file=no&quot;,
+        &quot;/absolute/path/to/PkgFactory.jl/apps/mcp/bin/pkgfactory-mcp.jl&quot;
+      ]
+    }
+  }
+}</code></pre><p>Provide credentials through your client&#39;s secret/environment settings. On Windows, forward slashes work in these paths. Logs go to stderr; stdout is reserved for MCP messages. Allow enough startup time for Julia&#39;s first load.</p><h3 id="Tools"><a class="docs-heading-anchor" href="#Tools">Tools</a><a id="Tools-1"></a><a class="docs-heading-anchor-permalink" href="#Tools" title="Permalink"></a></h3><table><tr><th style="text-align: right">Tool</th><th style="text-align: right">Input</th><th style="text-align: right">Result</th></tr><tr><td style="text-align: right"><code>list_templates</code></td><td style="text-align: right"><code>{}</code></td><td style="text-align: right">Available template names</td></tr><tr><td style="text-align: right"><code>preview_package</code></td><td style="text-align: right">Package settings</td><td style="text-align: right">Saved <code>plan_id</code>, normalized repository, visibility, and planned filenames</td></tr><tr><td style="text-align: right"><code>create_package</code></td><td style="text-align: right"><code>{&quot;plan_id&quot;: &quot;...&quot;}</code></td><td style="text-align: right">Repository URL and whether setup was resumed</td></tr></table><p>Example input to <code>preview_package</code>:</p><pre><code class="language-json hljs">{
+  &quot;owner&quot;: &quot;octocat&quot;,
+  &quot;name&quot;: &quot;MyPackage&quot;,
+  &quot;authors&quot;: [&quot;The Octocat&quot;],
+  &quot;description&quot;: &quot;A package for my research&quot;,
+  &quot;template&quot;: &quot;minimum&quot;,
+  &quot;visibility&quot;: &quot;private&quot;
+}</code></pre><p>Input fields, defaults, and preview validation follow the shared <a href="#Package-settings">package settings</a>.</p><p>Present the preview to the user and execute only within their authorization. Creation accepts the saved plan ID, so settings cannot be changed between preview and execution. The client controls user approval: a plan ID itself is not proof of human consent.</p><h3 id="Plan-lifecycle"><a class="docs-heading-anchor" href="#Plan-lifecycle">Plan lifecycle</a><a id="Plan-lifecycle-1"></a><a class="docs-heading-anchor-permalink" href="#Plan-lifecycle" title="Permalink"></a></h3><p>Plans expire 15 minutes after preview by default. A completed plan returns its cached result on a repeat call while retained. An in-flight or failed plan cannot be executed again. Different previews create different plans; this does not provide global repository deduplication. For failed creation, follow <a href="#Resuming-an-interrupted-setup">Resuming an interrupted setup</a>.</p><p>Local stdio keeps plans in process memory, so restarting clears them. The hosted Cloudflare service uses a <a href="../developer/deployment/#Persistence,-failures,-and-recovery">durable store</a> with quotas and recovery controls.</p><p>Tools execute synchronously. Account for creation time in the client&#39;s request timeout; long-running jobs require a persistent operation store and a worker.</p><h3 id="Julia-API"><a class="docs-heading-anchor" href="#Julia-API">Julia API</a><a id="Julia-API-1"></a><a class="docs-heading-anchor-permalink" href="#Julia-API" title="Permalink"></a></h3><pre><code class="language-julia hljs">using PkgFactoryMCP
 
-All templates include a Julia module, tests, `Project.toml`, a README, an MIT
-license, and GitHub Actions CI. The generated packages require Julia 1.12 or later.
-
-| Template | Included features | Generated example |
-| :--- | :--- | :--- |
-| `minimum` | Package files and CI | [TemplateMinimum.jl](https://github.com/JuliaPackageFactory/TemplateMinimum.jl) |
-| `simple` | Documentation with Documenter, Codecov coverage, and TagBot releases | [TemplateSimple.jl](https://github.com/JuliaPackageFactory/TemplateSimple.jl) |
-| `all-in-one` (default) | Documentation, coverage, TagBot, Aqua, JET, ExplicitImports, formatting, Dependabot, citation metadata, and a notebook example | [TemplateAllInOne.jl](https://github.com/JuliaPackageFactory/TemplateAllInOne.jl) |
-
-You can edit the generated files after creation.
-
-## Package settings
-
-These settings apply to the browser, terminal, Julia API, and MCP:
-
-| Setting | What to enter | Default |
-| :--- | :--- | :--- |
-| Owner | Your GitHub login or an organization where you can create repositories | Required |
-| Name | A Julia package name, such as `MyPkg`; the repository becomes `MyPkg.jl` | Required |
-| Authors | Names for the package metadata and license; comma-separated in the browser and interactive CLI | Required |
-| Description | A short description of the package | Empty |
-| Template | `minimum`, `simple`, or `all-in-one` | `all-in-one` |
-| Visibility | `public` or `private` | `public` |
-| Commit message | Message for the initial template commit | `Using PkgFactory.jl` |
-| Resume | Continue an interrupted creation using the original settings | `false` |
-
-PkgFactory accepts names with or without `.jl`. The package name must use ASCII
-letters and digits, start with an uppercase letter, include a lowercase letter,
-and contain at least five characters. Underscores, hyphens, `Julia` or `julia`,
-a `Ju` prefix, and a `jl` ending are rejected.
-
-The browser checks whether the repository name is already in use under the
-selected owner. Check General separately if you intend to register the package.
-An offline preview validates the inputs and renders files; it does not check
-remote availability.
-
-### GitHub authentication
-
-The browser uses GitHub&#39;s device login: authorize the displayed code in GitHub
-and return to the form. It requests `repo`, `workflow`, `read:user`, and
-`read:org` permissions to create repositories, commit workflows, and list owners.
-See [Authentication Design](developer/auth.md#CLI-and-Web-UI:-Device-Flow)
-for token handling and the underlying protocol.
-
-The terminal also supports device login. For scripts, supply a GitHub token
-that can create repositories and write their files and workflows. A classic PAT
-needs `repo` and `workflow`; organization policies or SSO may require additional
-authorization. Templates with documentation also need access to deploy keys and
-repository secrets.
-
-## After creation
-
-Open the new repository&#39;s **Actions** tab to check its first CI run. To start
-working locally, replace `OWNER` and `MyPkg` below with your chosen values:
-</code></pre><p>sh git clone https://github.com/OWNER/MyPkg.jl.git cd MyPkg.jl julia –project=. –startup-file=no -e &#39;import Pkg; Pkg.instantiate(); Pkg.test()&#39;</p><pre><code class="nohighlight hljs">
-Edit `src/MyPkg.jl` and add tests in `test/runtests.jl`.
-
-### Documentation and coverage
-
-For `simple` and `all-in-one`, select **Deploy from a branch**, `gh-pages`, and
-`/ (root)` in the repository&#39;s **Settings → Pages**. PkgFactory creates that
-branch and the Documenter key; the generated CI workflow builds and publishes
-the documentation. Edit its content under `docs/src/`.
-
-Sign in to [Codecov](https://app.codecov.io/) and grant its
-[GitHub App](https://github.com/apps/codecov) access to the new repository.
-The generated CI uses [GitHub OIDC](https://github.com/codecov/codecov-action#using-oidc)
-for coverage uploads, so no `CODECOV_TOKEN` is needed. These steps do not apply
-to `minimum`.
-
-### Registering a release
-
-Creating a repository does not register the package in Julia&#39;s General registry.
-When the package is ready, follow the
-[General registration guide](https://github.com/JuliaRegistries/General#registering-a-package-in-general)
-and enable the [Registrator GitHub App](https://github.com/apps/juliaregistrator)
-for the repository. The `simple` and `all-in-one` templates include TagBot to
-create tags and GitHub releases after registration.
-
-## Terminal interface
-
-From the PkgFactory checkout in [Get the source](index.md#Get-the-source), run:
-</code></pre><p>sh julia –project=apps/cli –startup-file=no -e &#39;import Pkg; Pkg.instantiate()&#39; julia –project=apps/cli –startup-file=no apps/cli/bin/pkgfactory.jl</p><pre><code class="nohighlight hljs">
-Answer the prompts for package settings, review the file list, and confirm
-creation with `y`. Press Enter to accept a displayed default. The CLI reads
-`GITHUB_TOKEN`, falling back to `GH_TOKEN` when it is unset; without a token,
-it prints instructions for GitHub device login.
-
-To preview a package without authenticating or creating a repository:
-</code></pre><p>sh julia –project=apps/cli –startup-file=no apps/cli/bin/pkgfactory.jl –owner octocat –name MyPkg –author &quot;The Octocat&quot; –template minimum –visibility private –preview</p><pre><code class="nohighlight hljs">
-Remove `--preview` to create it. Repeat `--author` for multiple authors.
-Use `--yes` to skip the creation confirmation when scripting, and `--help`
-to list all options. Missing required settings are prompted for; omitted
-optional settings use the defaults in the table above.
-
-## Julia and notebooks
-
-Install PkgFactory in your Julia environment:
-</code></pre><p>julia import Pkg Pkg.add(url=&quot;https://github.com/JuliaPackageFactory/PkgFactory.jl.git&quot;)</p><pre><code class="nohighlight hljs">
-Prepare and inspect the files before creating a repository:
-</code></pre><p>julia using PkgFactory</p><p>spec = PackageSpec(     owner=&quot;octocat&quot;,     name=&quot;MyPkg&quot;,     authors=[&quot;The Octocat&quot;],     description=&quot;A package for my research&quot;,     template=&quot;simple&quot;,     visibility=&quot;public&quot;, ) plan = plan_package(spec) display(plan) files = Dict(plan.contents) println(files[&quot;Project.toml&quot;])</p><pre><code class="nohighlight hljs">
-Planning needs no credentials and makes no network requests. The plan contains
-the generated filenames and contents, including the package UUID.
-
-Set `GITHUB_TOKEN` in the Julia process&#39;s environment before running the next
-cell. This call creates the GitHub repository using the files you previewed:
-</code></pre><p>julia credential = Credential(ENV[&quot;GITHUB<em>TOKEN&quot;]) result = create</em>package(credential, plan) println(result[&quot;url&quot;])</p><pre><code class="nohighlight hljs">
-See the [example notebook](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/examples/PkgFactory.ipynb)
-for the same workflow in Jupyter, and the [API Reference](api.md) for function details.
-
-## MCP interface
-
-The MCP interface is the `PkgFactoryMCP` Julia application in `apps/mcp/`.
-It supports local stdio and authenticated Streamable HTTP through
-[ModelContextProtocol.jl](https://github.com/JuliaSMLM/ModelContextProtocol.jl).
-
-### Hosted service
-
-Add the service&#39;s HTTPS `/mcp` URL to an OAuth-capable MCP client. Confirm the
-client name and redirect destination on the consent page, then sign in with
-your own GitHub account. Repository operations use that account&#39;s permissions.
-The hosting configuration is documented in the [Deployment Guide](developer/deployment.md).
-
-### Local stdio
-
-[Get the source](index.md#Get-the-source), then run these commands from the
-repository root:
-</code></pre><p>sh julia –project=apps/mcp –startup-file=no -e &#39;using Pkg; Pkg.instantiate()&#39; julia –project=apps/mcp –startup-file=no apps/mcp/bin/pkgfactory-mcp.jl –read-only</p><pre><code class="nohighlight hljs">
-The final command waits for MCP messages on stdin. Configure your MCP client to
-launch it; this is not an interactive Julia REPL. Omit `--read-only` to enable
-repository creation and supply `GITHUB_TOKEN` (or `GH_TOKEN`) in the server&#39;s
-environment. The token is only read when creation is requested.
-
-For clients using the `mcpServers` configuration format:
-</code></pre><p>json {   &quot;mcpServers&quot;: {     &quot;pkgfactory&quot;: {       &quot;command&quot;: &quot;julia&quot;,       &quot;args&quot;: [         &quot;–project=/absolute/path/to/PkgFactory.jl/apps/mcp&quot;,         &quot;–startup-file=no&quot;,         &quot;/absolute/path/to/PkgFactory.jl/apps/mcp/bin/pkgfactory-mcp.jl&quot;       ]     }   } }</p><pre><code class="nohighlight hljs">
-Provide credentials through your client&#39;s secret/environment settings. On
-Windows, forward slashes work in these paths. Logs go to stderr; stdout is
-reserved for MCP messages. Allow enough startup time for Julia&#39;s first load.
-
-### Tools
-
-| Tool | Input | Result |
-| --- | --- | --- |
-| `list_templates` | `{}` | Available template names |
-| `preview_package` | Package settings | Saved `plan_id`, normalized repository, visibility, and planned filenames |
-| `create_package` | `{&quot;plan_id&quot;: &quot;...&quot;}` | Repository URL and whether setup was resumed |
-
-Example input to `preview_package`:
-</code></pre><p>json {   &quot;owner&quot;: &quot;octocat&quot;,   &quot;name&quot;: &quot;MyPackage&quot;,   &quot;authors&quot;: [&quot;The Octocat&quot;],   &quot;description&quot;: &quot;A package for my research&quot;,   &quot;template&quot;: &quot;minimum&quot;,   &quot;visibility&quot;: &quot;private&quot; }</p><pre><code class="nohighlight hljs">
-Input fields, defaults, and preview validation follow the shared
-[package settings](#Package-settings).
-
-Present the preview to the user and execute only within their authorization.
-Creation accepts the saved plan ID, so settings cannot be changed between
-preview and execution. The client controls user approval: a plan ID itself is
-not proof of human consent.
-
-### Plan lifecycle
-
-Plans expire 15 minutes after preview by default. A completed plan returns its
-cached result on a repeat call while retained. An in-flight or failed plan cannot
-be executed again. Different previews create different plans; this does not
-provide global repository deduplication. For failed creation, follow
-[Resuming an interrupted setup](#Resuming-an-interrupted-setup).
-
-Local stdio keeps plans in process memory, so restarting clears them. The hosted
-Cloudflare service uses a [durable store](developer/deployment.md#Persistence,-failures,-and-recovery)
-with quotas and recovery controls.
-
-Tools execute synchronously. Account for creation time in the client&#39;s request
-timeout; long-running jobs require a persistent operation store and a worker.
-
-### Julia API
-</code></pre><p>julia using PkgFactoryMCP</p><p>server = build<em>server(enable</em>create = false) # no process started serve_stdio()                              # blocks until client disconnects</p><pre><code class="nohighlight hljs">
-The default in-memory store retains up to 256 plans. Configure `plan_ttl` and
-`max_plans` in `build_server` to change its lifetime and capacity.
-
-Applications hosting multiple users can call:
-</code></pre><p>julia serve<em>http(     auth = oauth</em>middleware,     resource<em>metadata = oauth</em>resource<em>metadata,     backend</em>resolver = ctx -&gt; github<em>backend</em>for(ctx.authenticated<em>user),     enable</em>create = true, )</p><pre><code class="nohighlight hljs">
-The application implements `github_backend_for` and returns a
-`PkgFactory.Credential` holding that user&#39;s GitHub token. HTTP does not
-implicitly fall back to the server&#39;s environment token. Plan access is tied to
-the verified identity. Account linking and a durable credential/operation store
-are application responsibilities; use the
-[Cloudflare integration](developer/deployment.md) for the included implementation.
-
-For application tests and development commands, see
-[Development Workflow](developer/index.md#Local-development-and-tests).
-Streamable HTTP follows the
-[standard transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports).
-
-### Acknowledgments
-
-This application was imported from JuliaPackageFactory/PkgFactoryMCP.jl
-at commit `0b16c0d106607e8dbdf47b4245a1d50189eb60a2`. The original
-[MIT license](https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/apps/mcp/LICENSE) is retained.
-
-## Resuming an interrupted setup
-
-After an error, inspect the repository before trying again. The browser checks
-its setup status after a failed creation. From Julia, you can query it with:
-</code></pre><p>julia repository<em>status(credential.access</em>token, spec.owner, spec.name) ```</p><p>The returned <code>state</code> is:</p><table><tr><th style="text-align: right">State</th><th style="text-align: right">Meaning</th></tr><tr><td style="text-align: right"><code>not_found</code></td><td style="text-align: right">GitHub returned 404 for this caller; check the account and permissions</td></tr><tr><td style="text-align: right"><code>unverified</code></td><td style="text-align: right">No recognized recovery marker; inspect manually</td></tr><tr><td style="text-align: right"><code>files_committed</code></td><td style="text-align: right">The template commit is recorded; later setup may still be running or have failed</td></tr><tr><td style="text-align: right"><code>complete</code></td><td style="text-align: right">Setup recorded completion; this does not audit later repository edits or CI</td></tr></table><p>If the template was committed, use the original settings and select <strong>Resume interrupted setup</strong> in the browser, add <code>--resume</code> to the CLI command, or build a new <code>PackageSpec</code> with <code>resume=true</code> in Julia. Keep the owner, name, authors, description, template, visibility, and commit message unchanged.</p><p>The core commits <code>.pkgfactory.json</code> atomically with the template. This marker holds a settings fingerprint, a <code>Project.toml</code> digest, and the operation state, without credentials. The final successful step records <code>complete</code> separately. Resume requires a matching marker and an unchanged <code>Project.toml</code>. It continues the remaining setup without replacing the package files. A completed matching operation returns its repository URL without writes. If creation stopped before the template commit, or the repository has no recovery marker, inspect it manually; automatic resume is refused. PkgFactory does not delete repositories or roll back changes after a failure.</p><p>For documentation templates, recovery installs a new deploy key pair and updates the Secret before deleting older keys titled <code>PkgFactory Documenter ...</code>. Other deploy keys are preserved. If uploading the Secret fails, the next explicit resume repairs the pair.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+server = build_server(enable_create = false) # no process started
+serve_stdio()                              # blocks until client disconnects</code></pre><p>The default in-memory store retains up to 256 plans. Configure <code>plan_ttl</code> and <code>max_plans</code> in <code>build_server</code> to change its lifetime and capacity.</p><p>Applications hosting multiple users can call:</p><pre><code class="language-julia hljs">serve_http(
+    auth = oauth_middleware,
+    resource_metadata = oauth_resource_metadata,
+    backend_resolver = ctx -&gt; github_backend_for(ctx.authenticated_user),
+    enable_create = true,
+)</code></pre><p>The application implements <code>github_backend_for</code> and returns a <code>PkgFactory.Credential</code> holding that user&#39;s GitHub token. HTTP does not implicitly fall back to the server&#39;s environment token. Plan access is tied to the verified identity. Account linking and a durable credential/operation store are application responsibilities; use the <a href="../developer/deployment/">Cloudflare integration</a> for the included implementation.</p><p>For application tests and development commands, see <a href="../developer/#Local-development-and-tests">Development Workflow</a>. Streamable HTTP follows the <a href="https://modelcontextprotocol.io/specification/2025-11-25/basic/transports">standard transport</a>.</p><h3 id="Acknowledgments"><a class="docs-heading-anchor" href="#Acknowledgments">Acknowledgments</a><a id="Acknowledgments-1"></a><a class="docs-heading-anchor-permalink" href="#Acknowledgments" title="Permalink"></a></h3><p>This application was imported from JuliaPackageFactory/PkgFactoryMCP.jl at commit <code>0b16c0d106607e8dbdf47b4245a1d50189eb60a2</code>. The original <a href="https://github.com/JuliaPackageFactory/PkgFactory.jl/blob/main/apps/mcp/LICENSE">MIT license</a> is retained.</p><h2 id="Resuming-an-interrupted-setup"><a class="docs-heading-anchor" href="#Resuming-an-interrupted-setup">Resuming an interrupted setup</a><a id="Resuming-an-interrupted-setup-1"></a><a class="docs-heading-anchor-permalink" href="#Resuming-an-interrupted-setup" title="Permalink"></a></h2><p>After an error, inspect the repository before trying again. The browser checks its setup status after a failed creation. From Julia, you can query it with:</p><pre><code class="language-julia hljs">repository_status(credential.access_token, spec.owner, spec.name)</code></pre><p>The returned <code>state</code> is:</p><table><tr><th style="text-align: right">State</th><th style="text-align: right">Meaning</th></tr><tr><td style="text-align: right"><code>not_found</code></td><td style="text-align: right">GitHub returned 404 for this caller; check the account and permissions</td></tr><tr><td style="text-align: right"><code>unverified</code></td><td style="text-align: right">No recognized recovery marker; inspect manually</td></tr><tr><td style="text-align: right"><code>files_committed</code></td><td style="text-align: right">The template commit is recorded; later setup may still be running or have failed</td></tr><tr><td style="text-align: right"><code>complete</code></td><td style="text-align: right">Setup recorded completion; this does not audit later repository edits or CI</td></tr></table><p>If the template was committed, use the original settings and select <strong>Resume interrupted setup</strong> in the browser, add <code>--resume</code> to the CLI command, or build a new <code>PackageSpec</code> with <code>resume=true</code> in Julia. Keep the owner, name, authors, description, template, visibility, and commit message unchanged.</p><p>The core commits <code>.pkgfactory.json</code> atomically with the template. This marker holds a settings fingerprint, a <code>Project.toml</code> digest, and the operation state, without credentials. The final successful step records <code>complete</code> separately. Resume requires a matching marker and an unchanged <code>Project.toml</code>. It continues the remaining setup without replacing the package files. A completed matching operation returns its repository URL without writes. If creation stopped before the template commit, or the repository has no recovery marker, inspect it manually; automatic resume is refused. PkgFactory does not delete repositories or roll back changes after a failure.</p><p>For documentation templates, recovery installs a new deploy key pair and updates the Secret before deleting older keys titled <code>PkgFactory Documenter ...</code>. Other deploy keys are preserved. If uploading the Secret fails, the next explicit resume repairs the pair.</p><script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
 mermaid.initialize({
     startOnLoad: true,
     theme: "neutral"
 });
-</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../developer/">Development Workflow »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Sunday 27 September 2026 19:35">Sunday 27 September 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</script></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../developer/">Development Workflow »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Monday 28 September 2026 05:50">Monday 28 September 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
