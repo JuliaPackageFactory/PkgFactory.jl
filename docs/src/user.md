@@ -37,6 +37,7 @@ git clone https://github.com/JuliaPackageFactory/PkgFactory.jl.git
 cd PkgFactory.jl
 julia +1.12 --project=apps/mcp --startup-file=no -e 'import Pkg; Pkg.instantiate()'
 julia +1.12 --project=apps/mcp --startup-file=no apps/mcp/bin/pkgfactory-mcp.jl --read-only
+```
 
 ## Choosing a template
 
